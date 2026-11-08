@@ -239,7 +239,7 @@ PYENV
           const present = names.includes(c);
           print(c + \" \" + idx + \" = \" + (present ? d.getCollection(c).getIndexes().filter(i => i.name === idx).length : \"missing collection\"));
         }
-        print(\"gridfs chunks index = \" + (names.includes(\"artifacts_fs.chunks\") ? d.getCollection(\"artifacts_fs.chunks\").getIndexes().filter(i => i.name === \"files_id_1_n_1\").length : \"missing collection\"));
+        print(\"artifacts_fs.chunks indexes = \" + (names.includes(\"artifacts_fs.chunks\") ? JSON.stringify(d.getCollection(\"artifacts_fs.chunks\").getIndexes().map(i => i.name)) : \"missing collection\"));
       "
     '
     ;;

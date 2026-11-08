@@ -1,0 +1,27 @@
+{
+  "provider": {
+    "apiKey": "sk-your-api-key-here",
+    "baseUrl": "http://localhost:3030/v1",
+    "defaultModel": "gpt-4o"
+  },
+  "agent": {
+    "maxIterations": 20,
+    "llmStreamIdleTimeout": "90s",
+    "llmTtfbTimeout": "300s",
+    "llmRequestTimeout": "120s",
+    "llmMaxRetries": 2,
+    "sessionDir": "./sessions",
+    "llmSummarizeReasoningEffort": "low",
+    "llmSubagentReasoningEffort": "low"
+  },
+  "tools": {
+    "workspace": "./workspace",
+    "restrictToWorkspace": true,
+    "shell": {
+      "timeout": "60s"
+    },
+    "web": {
+      "searchApiKey": ""
+    }
+  }
+}

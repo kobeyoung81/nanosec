@@ -1,0 +1,11 @@
+NanoSec
+Copyright (c) 2025-2026 kobeyoung81
+
+本仓库以 GNU Affero General Public License v3.0 授权，全文见 LICENSE。
+
+第三方依赖
+- Go 依赖：构建时由 `go-licenses report` 生成清单，随 CI 产物发布。
+- 前端依赖：构建时由 `license-checker-rseidelsohn` 生成清单，随 CI 产物发布。
+
+商标
+"NanoSec" 名称与 logo 不随代码授权，商标条款另行声明。

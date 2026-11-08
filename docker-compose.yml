@@ -1,0 +1,217 @@
+# One MongoDB instance, one owner per database: the bus owns NANOSEC_BUS_DATABASE_URI
+# and nanoartifacts owns NANOARTIFACTS_MONGO_URI. No component reads another's
+# database; they talk over HTTP. Copy .env.example to .env and fill in both URIs
+# and the shared token before the first `docker compose up -d`.
+services:
+  # One-shot bootstrap: apply the collection manifests (with a retry loop for a
+  # briefly-unreachable MongoDB) and seed the built-in catalogs.
+  bus-init:
+    build:
+      context: ./nanobus
+    image: kobeyoung81/nanobus:nanosec
+    entrypoint: ["sh", "-c"]
+    command:
+      # `agent-types seed` runs before `prompts seed` on purpose: the prompt
+      # seeder only writes onto types that already exist, so a fresh store with
+      # the order reversed would come up with every built-in prompt blank.
+      - "for i in $$(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanobus migrate up && nanobus config seed && nanobus skills seed && nanobus permissions seed && nanobus agent-types seed && nanobus prompts seed && nanobus mcp seed && echo 'bus init complete'"
+    environment:
+      # The MongoDB the store reads and writes. Required: the bus refuses to
+      # start without it.
+      NANOSEC_BUS_DATABASE_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      # Needed by `nanobus mcp seed`: the first-party MCP entry stores this
+      # token as its Authorization header, because the agent runtime sends
+      # catalog headers verbatim.
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    restart: "no"
+
+  nanobus:
+    build:
+      context: ./nanobus
+    image: kobeyoung81/nanobus:nanosec
+    entrypoint: nanobus
+    restart: unless-stopped
+    environment:
+      # The MongoDB the store reads and writes. Required: the bus refuses to
+      # start without it.
+      NANOSEC_BUS_DATABASE_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      NANOSEC_BUS_NANOAUTH_BASE_URL: http://nanoauth:8081
+      # Shared token for the bus's internal endpoints (REST + the tunnel and
+      # terminal sockets). Every component of the stack holds the same value, and
+      # so does every agent container the runner provisions. Override it from the
+      # shell or .env; a deployment without one cannot talk to the bus at all.
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    ports:
+      - "39000:9000"
+    depends_on:
+      bus-init:
+        condition: service_completed_successfully
+
+  # Local speech-to-text for the composer's dictation, dialed by the bus as an
+  # ordinary model provider (base_url http://nanoasr:6006/v1). The model and the
+  # sherpa-onnx libraries are baked in at build time, so nothing is mounted and
+  # the container never reaches outside the compose network.
+  #
+  # Not published to the host: the bus is the only caller. The one thing it reads
+  # back from the platform is the hotword list (voice -> realtime.hotwords), which
+  # is why it holds the internal token: sherpa takes hotwords when a recogniser is
+  # built, so this service polls the config and rebuilds rather than taking a list
+  # per request.
+  nanoasr:
+    build:
+      context: ./nanoasr
+      args:
+        # A punctuation model is optional (279 MB); set to 1 to bake it in.
+        PUNCT_MODEL: ""
+    image: kobeyoung81/nanoasr:nanosec
+    restart: unless-stopped
+    environment:
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    command:
+      - "--addr=:6006"
+      - "--models-dir=/models"
+      - "--bus-url=http://nanobus:9000"
+      - "--max-sessions=4"
+      - "--threads=2"
+    # Each recogniser decodes on two onnxruntime threads and up to four sessions
+    # may run at once, so the cap is what keeps a busy moment from eating the whole
+    # four-core host (which also runs twenty-odd other containers). With hotwords on
+    # a decode costs about 2.5x what greedy search does, so this is the number that
+    # decides whether four overlapping dictations stay comfortable.
+    cpus: "3.0"
+    mem_limit: 1.5g
+    healthcheck:
+      test: ["CMD", "nanoasr", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  nanoauth:
+    build:
+      context: ./nanoauth
+    image: kobeyoung81/nanoauth:nanosec
+    restart: unless-stopped
+    environment:
+      # Accounts, refresh tickets and the shared config all live behind the bus,
+      # so this service holds no database credentials of its own.
+      NANOAUTH_BUS_URL: http://nanobus:9000
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    ports:
+      - "39081:8081"
+    depends_on:
+      # The keypair it generates on first boot is stored in the platform config,
+      # so the bus (and its seeded config) has to be up first.
+      bus-init:
+        condition: service_completed_successfully
+      nanobus:
+        condition: service_started
+    # The RSA JWT keypair is generated on first boot and stored in the platform
+    # config (service_config_items, via the bus) — no key files or secrets to mount.
+
+  nanorunner:
+    build:
+      context: ./nanoprovisioner
+    image: kobeyoung81/nanoprovisioner:nanosec
+    restart: unless-stopped
+    depends_on:
+      - nanobus
+    environment:
+      # Optional: override the Docker network agent containers attach to (the
+      # runner auto-detects its own Compose network when unset/incorrect).
+      NANOSEC_RUNNER_NETWORK: ${NANOSEC_RUNNER_NETWORK:-}
+      NANOSEC_RUNNER_AGENT_IMAGE: ${NANOSEC_RUNNER_AGENT_IMAGE:-}
+      # Shared token for the bus's internal endpoints (REST + the tunnel and
+      # terminal sockets). Every component of the stack holds the same value, and
+      # so does every agent container the runner provisions. Override it from the
+      # shell or .env; a deployment without one cannot talk to the bus at all.
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    volumes:
+      # The trust root of the platform: the runner must talk to the Docker
+      # API to provision agent containers, so it holds effectively host-root
+      # power. Anything that compromises this container compromises the host,
+      # and nothing else in this compose file should get this mount.
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: ["--bus-url", "ws://nanobus:9000", "--runner-id", "nanorunner"]
+
+  # Chat platform gateway. Requires at least one channel enabled in the bus  # config (portal → Configs → gateway, e.g. channels.web.enabled=true is the
+  # default). The web channel (:8080) serves the portal's browser chat and is
+  # published so browsers can reach it (see VITE_GATEWAY_URL in nanoportal).
+  nanogateway:
+    build:
+      context: ./nanogateway
+    image: kobeyoung81/nanogateway:nanosec
+    restart: unless-stopped
+    depends_on:
+      - nanobus
+    ports:
+      - "39080:8080"
+    environment:
+      # Shared token for the bus's internal endpoints (REST + the tunnel and
+      # terminal sockets). Every component of the stack holds the same value, and
+      # so does every agent container the runner provisions. Override it from the
+      # shell or .env; a deployment without one cannot talk to the bus at all.
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    command: ["--bus-url", "ws://nanobus:9000"]
+
+  nanoportal:
+    build:
+      context: ./nanoportal
+    image: kobeyoung81/nanoportal:nanosec
+    restart: unless-stopped
+    environment:
+      NANO_PORTAL_BUS_URL: http://nanobus:9000
+      # Shared token for the bus's internal endpoints (REST + the tunnel and
+      # terminal sockets). Every component of the stack holds the same value, and
+      # so does every agent container the runner provisions. Override it from the
+      # shell or .env; a deployment without one cannot talk to the bus at all.
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    ports:
+      - "39090:80"
+    depends_on:
+      # nginx proxies the gateway's web channel under the same origin; starting
+      # after it means the upstream name resolves to the right container even
+      # before the first reload (see the resolver in nanoportal/deploy/nginx.conf).
+      - nanogateway
+      - nanobus
+
+  # The work library: its own service, its own MongoDB database, its own front
+  # end. The second component that holds a database connection — deliberately,
+  # and scoped to its own database (see the header note). Reached only through
+  # the portal's nginx, which proxies /artifacts/ at the same origin.
+  nanoartifacts:
+    build:
+      context: ./nanoartifacts
+    image: kobeyoung81/nanoartifacts:nanosec
+    restart: unless-stopped
+    environment:
+      # Its own database, not the bus's. Required: the service refuses to start
+      # without it (a missing URI must not fall back to a default database).
+      NANOARTIFACTS_MONGO_URI: ${NANOARTIFACTS_MONGO_URI:?set NANOARTIFACTS_MONGO_URI in .env}
+      # HMAC key for the preview-session cookie the iframe carries. The cookie
+      # is scoped to this service's API path; every request re-checks the
+      # artifact's permissions, so revoking a share is immediate.
+      NANOARTIFACTS_SESSION_SECRET: ${NANOARTIFACTS_SESSION_SECRET:?set NANOARTIFACTS_SESSION_SECRET in .env}
+      # Scope of the preview cookie. "/" works wherever the portal is mounted;
+      # tighten to the external API path (/nanoartifacts/api) if you want it
+      # confined, but a mismatch silently produces 401s.
+      NANOARTIFACTS_COOKIE_PATH: ${NANOARTIFACTS_COOKIE_PATH:-/}
+      # Per-user storage ceiling, counted after content dedupe.
+      NANOARTIFACTS_QUOTA_BYTES: ${NANOARTIFACTS_QUOTA_BYTES:-2147483648}
+      NANOSEC_BUS_URL: http://nanobus:9000
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # The same keys the portal validates against: identity is nanoauth's, not
+      # a local user table.
+      NANOAUTH_JWKS_URL: http://nanobus:9000/auth/v1/.well-known/jwks
+    depends_on:
+      - nanobus
+
+  # Builds/tags the nanosec agent image (nanosec:latest) used by nanorunner to
+  # provision per-user agent containers. Not started as part of `up`; build it
+  # with: docker compose build nanosec
+  nanosec:
+    build:
+      context: ./nanoagent
+    image: kobeyoung81/nanoagent:nanosec
+    profiles: ["agent"]
+    command: ["version"]

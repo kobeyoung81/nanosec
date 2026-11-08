@@ -1,0 +1,28 @@
+# nanorunner with the k8s provisioner backend.
+# RBAC (ServiceAccount/Role/RoleBinding) is in nanorunner/deploy/k8s/rbac.yaml.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanorunner
+  namespace: nanosec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nanorunner
+  template:
+    metadata:
+      labels:
+        app: nanorunner
+    spec:
+      serviceAccountName: nanorunner
+      containers:
+        - name: nanorunner
+          image: kobeyoung81/nanorunner:latest
+          args: ["--bus-url", "ws://nanobus:9000"]
+          env:
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token

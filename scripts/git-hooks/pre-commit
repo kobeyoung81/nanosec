@@ -1,0 +1,12 @@
+#!/bin/sh
+# Pre-commit hook: ensure standalone build works outside go.work.
+# Prevents go.sum mismatch errors in CI (Jenkins builds without workspace).
+
+set -e
+
+echo "[pre-commit] Checking standalone build..."
+
+GOWORK=off CGO_ENABLED=0 go build ./...
+GOWORK=off go vet ./...
+
+echo "[pre-commit] Standalone build OK"

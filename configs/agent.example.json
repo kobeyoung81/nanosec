@@ -1,0 +1,39 @@
+{
+  "_comment": "This is a reference document showing config shape. At runtime, the agent loads config from the bus via nanobus config items (flat dot-notation keys like provider.apiKey), not from this file.",
+  "provider": {
+    "apiKey": "sk-your-openai-api-key-here",
+    "baseUrl": "https://api.openai.com/v1",
+    "defaultModel": "gpt-4o"
+  },
+  "agent": {
+    "maxIterations": 20,
+    "llmStreamIdleTimeout": "90s",
+    "llmTtfbTimeout": "300s",
+    "llmRequestTimeout": "120s",
+    "llmMaxRetries": 2,
+    "sessionDir": "~/.nanosec/sessions",
+    "contextWindow": 128000,
+    "maxOutputTokens": 4096,
+    "maxToolResultChars": 80000,
+    "summarizeTokenPercent": 50,
+    "summarizeMessageThreshold": 20,
+    "idleSessionTimeout": "30m",
+    "llmSummarizeReasoningEffort": "low",
+    "llmSubagentReasoningEffort": "low"
+  },
+  "tools": {
+    "workspace": "~/.nanosec/workspace",
+    "restrictToWorkspace": true,
+    "shell": {
+      "timeout": "60s"
+    },
+    "web": {
+      "searchApiKey": ""
+    }
+  },
+  "media": {
+    "corpID": "ww1234567890abcdef",
+    "corpSecret": "your-corp-secret-here",
+    "agentID": 1000001
+  }
+}

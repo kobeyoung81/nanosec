@@ -1,0 +1,69 @@
+# One-shot store + config init (collection manifests + seed). Re-run to re-seed.
+# Runs against the MongoDB in the nanosec-secrets Secret.
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nanobus-init
+  namespace: nanosec
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: init
+          image: kobeyoung81/nanobus:latest
+          command: ["sh", "-c"]
+          args:
+            - "for i in $(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done && nanobus config seed && nanobus config set runner backend k8s && echo 'bus init complete'"
+          env:
+            - name: NANOSEC_BUS_DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: mongo-uri
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanobus
+  namespace: nanosec
+spec:
+  selector:
+    app: nanobus
+  ports:
+    - port: 9000
+      targetPort: 9000
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanobus
+  namespace: nanosec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nanobus
+  template:
+    metadata:
+      labels:
+        app: nanobus
+    spec:
+      containers:
+        - name: nanobus
+          image: kobeyoung81/nanobus:latest
+          env:
+            - name: NANOSEC_BUS_DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: mongo-uri
+            - name: NANOSEC_BUS_NANOAUTH_BASE_URL
+              value: "http://nanoauth:8081"
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token
+          ports:
+            - containerPort: 9000

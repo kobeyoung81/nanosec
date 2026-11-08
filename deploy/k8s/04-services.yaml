@@ -1,0 +1,70 @@
+# nanoportal admin UI.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanoportal
+  namespace: nanosec
+spec:
+  selector:
+    app: nanoportal
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanoportal
+  namespace: nanosec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nanoportal
+  template:
+    metadata:
+      labels:
+        app: nanoportal
+    spec:
+      containers:
+        - name: nanoportal
+          image: kobeyoung81/nanoportal:latest
+          env:
+            - name: NANO_PORTAL_BUS_URL
+              value: "http://nanobus:9000"
+            - name: NANO_PORTAL_HYPERVISOR_URL
+              value: "http://nanosec:9090"
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token
+          ports:
+            - containerPort: 80
+---
+# nanogateway chat platform adapters (configure channels in bus config first).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanogateway
+  namespace: nanosec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nanogateway
+  template:
+    metadata:
+      labels:
+        app: nanogateway
+    spec:
+      containers:
+        - name: nanogateway
+          image: kobeyoung81/nanogateway:latest
+          args: ["--bus-url", "ws://nanobus:9000"]
+          env:
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token

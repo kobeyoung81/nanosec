@@ -1,0 +1,35 @@
+{
+  "_comment": "This is a reference document showing config shape. At runtime, the gateway loads config from the bus via nanobus config items (flat dot-notation keys like channels.cli.userID), not from this file.",
+  "channels": {
+    "cli": {
+      "enabled": true,
+      "userID": "alice"
+    },
+    "wecom": {
+      "enabled": false,
+      "corpID": "ww1234567890abcdef",
+      "corpSecret": "your-corp-secret-here",
+      "agentID": 1000001,
+      "token": "your-callback-token",
+      "encodingAESKey": "your-43-char-base64-encoding-aes-key-here",
+      "callbackAddr": ":8081"
+    },
+    "feishu": {
+      "enabled": false,
+      "appId": "cli_a1234567890abcde",
+      "appSecret": "your-app-secret-here",
+      "encryptKey": "your-encrypt-key",
+      "verificationToken": "your-verification-token"
+    },
+    "wechatkf": {
+      "enabled": false,
+      "corpID": "ww1234567890abcdef",
+      "kfSecret": "your-kf-secret-here",
+      "openKfID": "wkAJ2GCAAAxxxxxx"
+    }
+  },
+  "ack": {
+    "enabled": false,
+    "text": "Received, processing..."
+  }
+}

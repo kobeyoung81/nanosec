@@ -1,0 +1,14 @@
+go 1.26.2
+
+use (
+	./nanoportal
+	./nanobus
+	./nanogateway
+	./nanoprotocol
+	./nanoprovisioner
+	./nanoagent
+	./nanoauth
+	./nanoartifacts
+)
+
+replace github.com/xen0n/go-workwx/v2 v2.0.0-alpha.1 => ./nanogateway/go-workwx

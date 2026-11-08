@@ -1,0 +1,14 @@
+{
+  "channels": {
+    "cli": {
+      "enabled": true,
+      "userID": "admin"
+    },
+    "wecom": {
+      "enabled": false
+    },
+    "feishu": {
+      "enabled": false
+    }
+  }
+}

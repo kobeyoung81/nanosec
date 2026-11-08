@@ -1,0 +1,15 @@
+{
+  "_comment": "This is a reference document showing config shape. At runtime, the runner loads config from the bus via nanobus config items (flat dot-notation keys like runner.pollInterval), not from this file.",
+  "runner": {
+    "pollInterval": 5,
+    "runnerID": "runner-01",
+    "backend": "docker",
+    "quota": {
+      "free":  { "memoryMB": 512,  "cpus": 1000000000, "pids": 256 },
+      "pro":   { "memoryMB": 2048, "cpus": 2000000000, "pids": 512 },
+      "ultra": { "memoryMB": 4096, "cpus": 4000000000, "pids": 1024 }
+    }
+  },
+  "agentImage": "kobeyoung81/nanosec:latest",
+  "network": "nanosec_default"
+}

@@ -1,0 +1,40 @@
+[submodule "nanoagent"]
+	path = nanoagent
+	url = ../nanoagent.git
+	branch = master
+[submodule "nanoauth"]
+	path = nanoauth
+	url = ../nanoauth.git
+	branch = master
+[submodule "nanobus"]
+	path = nanobus
+	url = ../nanobus.git
+	branch = master
+[submodule "nanogateway"]
+	path = nanogateway
+	url = ../nanogateway.git
+	branch = master
+[submodule "nanoportal"]
+	path = nanoportal
+	url = ../nanoportal.git
+	branch = master
+[submodule "nanoprotocol"]
+	path = nanoprotocol
+	url = ../nanoprotocol.git
+	branch = master
+[submodule "nanoprovisioner"]
+	path = nanoprovisioner
+	url = ../nanoprovisioner.git
+	branch = master
+[submodule "nanoui"]
+	path = nanoui
+	url = ../nanoui.git
+	branch = master
+[submodule "nanoasr"]
+	path = nanoasr
+	url = ../nanoasr.git
+	branch = master
+[submodule "nanoartifacts"]
+	path = nanoartifacts
+	url = ../nanoartifacts.git
+	branch = master

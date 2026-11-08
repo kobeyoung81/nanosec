@@ -1,0 +1,44 @@
+# nanoauth — OAuth2/OIDC auth service.
+# It holds no database credentials: accounts, tickets and config all live behind
+# the bus. The RSA JWT keypair is generated on first boot and stored in the
+# platform config (via the bus) — no key Secret is needed.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanoauth
+  namespace: nanosec
+spec:
+  selector:
+    app: nanoauth
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanoauth
+  namespace: nanosec
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nanoauth
+  template:
+    metadata:
+      labels:
+        app: nanoauth
+    spec:
+      containers:
+        - name: nanoauth
+          image: kobeyoung81/nanoauth:latest
+          env:
+            - name: NANOAUTH_BUS_URL
+              value: "http://nanobus:9000"
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token
+          ports:
+            - containerPort: 8081

@@ -1,0 +1,7 @@
+# Myriadmind control plane on Kubernetes.
+# Apply in order: 00-namespace, 02-secrets, 02-nanobus, 03-nanoauth,
+# 04-services, 05-nanorunner (uses the k8s provisioner backend).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nanosec

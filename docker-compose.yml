@@ -121,6 +121,10 @@ services:
       # runner auto-detects its own Compose network when unset/incorrect).
       NANOSEC_RUNNER_NETWORK: ${NANOSEC_RUNNER_NETWORK:-}
       NANOSEC_RUNNER_AGENT_IMAGE: ${NANOSEC_RUNNER_AGENT_IMAGE:-}
+      # Prefix for the agent container names. Two stacks sharing one Docker
+      # daemon must use different prefixes, otherwise each one removes the
+      # other's containers (the name is derived from the user id only).
+      NANOSEC_RUNNER_CONTAINER_PREFIX: ${NANOSEC_RUNNER_CONTAINER_PREFIX:-}
       # Shared token for the bus's internal endpoints (REST + the tunnel and
       # terminal sockets). Every component of the stack holds the same value, and
       # so does every agent container the runner provisions. Override it from the

@@ -42,7 +42,7 @@ services:
       # shell or .env; a deployment without one cannot talk to the bus at all.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
     ports:
-      - "39000:9000"
+      - "14400:9000"
     depends_on:
       bus-init:
         condition: service_completed_successfully
@@ -98,7 +98,7 @@ services:
       NANOAUTH_BUS_URL: http://nanobus:9000
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
     ports:
-      - "39081:8081"
+      - "14401:8081"
     depends_on:
       # The keypair it generates on first boot is stored in the platform config,
       # so the bus (and its seeded config) has to be up first.
@@ -145,7 +145,7 @@ services:
     depends_on:
       - nanobus
     ports:
-      - "39080:8080"
+      - "14402:8080"
     environment:
       # Shared token for the bus's internal endpoints (REST + the tunnel and
       # terminal sockets). Every component of the stack holds the same value, and
@@ -167,7 +167,7 @@ services:
       # shell or .env; a deployment without one cannot talk to the bus at all.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
     ports:
-      - "39090:80"
+      - "14403:80"
     depends_on:
       # nginx proxies the gateway's web channel under the same origin; starting
       # after it means the upstream name resolves to the right container even

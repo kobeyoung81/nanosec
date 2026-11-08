@@ -95,3 +95,29 @@
 | `system_flags` | `sys_flags` | sys | 一次性安装标记，不属于任何模块 |
 
 约束不变：一个集合只有一个写者。`auth_` 前缀在 P1 仍由总线写入（nanoauth 直连是 P2 的事），P1 只改名字、不搬写者。
+
+## 执行记录（2026-11-08，新栈 devnanosec）
+
+**做了什么**：停栈 → `mongodump` 两个库（245.9 MB，含 GridFS 分块）→ 恢复到临时库 → `renameCollection` 逐集合改名进 `nanosec`（35 个集合）→ 删掉旧名集合与临时库表 → 两条 URI 收敛为一条 → 起栈。
+
+**三处与计划不同的做法**：
+
+1. **迁移记录不搬，靠重放**。manifest 是声明式的（建已存在的索引是 no-op），首次启动时 bus 重放 14 个、artifacts 重放 3 个，`sys_migrations` 因此自然得到 17 条 `<service>:<name>` 记录。计划里"把两份 schema_migrations 合并"这一步省掉了。
+2. **改用「临时库 + renameCollection」**。`mongorestore --nsFrom/--nsTo` 对 GridFS 的 `fs.files` / `fs.chunks` 有 bucket 特判，逐集合改名会漏（实测只映射了 files，chunks 仍按原名恢复）。
+3. **URI 不能带库名**。`--uri` 里写了 `/nanosec` 时 mongorestore 会当成「单库恢复」，直接跳过 dump 里的库目录（日志：`don't know what to do with subdirectory`），必须去掉路径里的库名。
+
+**凭据（用户 2026-11-08 决定）**：两个 URI 指向同一个库、共用同一个凭据（`nanosec` 用户），不建 artifacts 专用角色。
+
+**结果**（`p1-migrate.sh verify`）：
+
+- 35 个集合、`stray: []`，没有旧名；
+- 计数与备份一致：`admin_audit_log` 1458、`auth_refresh_tokens` 246、`portal_sessions` 219、`admin_config` 114、`artifacts_fs.chunks` 115、`artifacts_versions` 115、`portal_agents` 35；
+- 索引在位：`auth_users.email_unique`、`admin_agent_types.name_unique`、`portal_sessions.agent_updated`；
+- `sys_migrations` = bus 14 + artifacts 3；`nanobus migrate up` 与 `nanoartifacts migrate up` 都是幂等的（0 pending）；
+- 门户 `/healthz` 200；两个 agent 容器的 hypervisor 隧道在 bus 重启后重新注册。
+
+**遗留**：
+
+1. `Dev.NanoSec` job 的构建脚本里两行 `echo` 仍写 `/nanoartifacts` 库与 `nanoartifacts` 用户（文件 root 所有）。不改的话，从 Jenkins workspace 直接 `compose up` 会用回旧库；当前运行时用 `newstack.env`（已改）。
+2. `artifacts_fs.chunks` 只有 `_id_` 索引 —— 迁移前也只有这一个，不是回归；按 `files_id` 查是全表扫描，建议 P3 补 `{files_id:1,n:1}` 唯一索引。
+3. 浏览器侧验收（登录 / 会话列表 / 聊天 / 作品库读写）待人工。

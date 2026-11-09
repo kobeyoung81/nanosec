@@ -180,7 +180,7 @@ docker compose restart nanogateway   # re-reads config
 
 > `nanogateway` exits with "no channels enabled" unless at least one channel is enabled.
 > The **web chat channel is enabled by default** (`channels.web.enabled=true`, seeded by
-> `nanobus config seed`). It listens on `:8080` inside the compose network and is
+> `nanoadmin config seed`). It listens on `:8080` inside the compose network and is
 > published on host port **18080**; the portal also proxies it under its own origin,
 > so browsers normally never need that port.
 
@@ -310,7 +310,7 @@ export NANOSEC_BUS_INTERNAL_TOKEN="$(openssl rand -hex 24)"
 
 # Store (the bus-init steps, in order)
 go run ./nanobus/cmd/nanobus migrate up
-go run ./nanobus/cmd/nanobus config seed
+go run ./nanoadmin/cmd/nanoadmin config seed
 go run ./nanobus/cmd/nanobus skills seed
 go run ./nanobus/cmd/nanobus permissions seed
 go run ./nanobus/cmd/nanobus agent-types seed

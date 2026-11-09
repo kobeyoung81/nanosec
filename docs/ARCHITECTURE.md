@@ -382,7 +382,7 @@ func (s *Store) Migrate(migrations map[string]string) ([]string, error)
 1. **Atomic message claiming** — `ClaimInbound`/`ClaimOutbound` use `SELECT ... FOR UPDATE` within a transaction
 2. **Auto-onboarding** — `ResolveUserBinding` auto-creates users (`status=pending`, `tier=free`), a `user_channels` entry, a default agent (migration 015), and a `container_requests` entry
 3. **Embedded migrations** — SQL files embedded via `go:embed`, applied lexicographically, tracked in `schema_migrations`
-4. **Key-value config** — `service_config_items` enables runtime reconfiguration; seeded by `nanobus config seed`
+4. **Key-value config** — `service_config_items` enables runtime reconfiguration; seeded by `nanoadmin config seed`
 5. **Auth proxy** — `/auth/v1/*` is reverse-proxied to nanoauth (no auth logic in the bus)
 
 ---
@@ -690,7 +690,7 @@ Admin dispose (portal):
 
 ### 5.1 Bus-Managed Configuration
 
-All services (gateway, agent, runner) load their configuration from the bus at startup via `GetConfigItems(componentType)`. The bus stores configs as key-value pairs in `service_config_items`, seeded by `nanobus config seed` and editable via the portal **Configs** page or `nanobus config set`.
+All services (gateway, agent, runner) load their configuration from the bus at startup via `GetConfigItems(componentType)`. The bus stores configs as key-value pairs in `service_config_items`, seeded by `nanoadmin config seed` and editable via the portal **Configs** page or `nanobus config set`.
 
 ```
 Service startup:
@@ -735,7 +735,7 @@ it provisions. A bus without it refuses those endpoints rather than serving them
 ```bash
 nanobus migrate up                     # Apply pending migrations
 nanobus migrate status                 # Show migration status
-nanobus config seed                    # Seed default config items for all components
+nanoadmin config seed                  # Seed the platform defaults (admin module)
 nanobus config get <component-type> [key]  # Get config item(s)
 nanobus config set <component-type> <key> <value>  # Set a config item
 ```
@@ -789,7 +789,7 @@ See [DEPLOYMENT.md](./DEPLOYMENT.md) for the full operations guide. Summary of t
 
 Every deployment:
 1. Requires a reachable MySQL 8.0 (`nanosec` schema shared by all services)
-2. Applies migrations + seeds config (`nanobus migrate up && nanobus config seed`)
+2. Applies migrations + seeds config (`nanoadmin migrate up && nanoadmin config seed`, then the bus seeds)
 3. Uses the prebuilt images `kobeyoung81/{nanobus,nanogateway,nanosec,nanorunner,nanoauth,nanoportal}:latest`
 4. Requires no JWT key provisioning — `nanoauth` generates and stores its RS256
    keypair in `service_config_items.auth.jwtPrivateKey`/`auth.jwtPublicKey` (MySQL)

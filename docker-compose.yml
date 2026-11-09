@@ -4,6 +4,21 @@
 # writes its own prefix and reads everything else over HTTP. Copy .env.example
 # to .env and fill in the URIs and the shared token before `docker compose up -d`.
 services:
+  # One-shot: applies the admin manifests and seeds the platform defaults the
+  # console edits. It runs before bus-init because the bus's own seeds read
+  # configuration (and because config is this module's collection).
+  admin-init:
+    build:
+      context: ./nanoadmin
+    image: kobeyoung81/nanoadmin:nanosec
+    entrypoint: ["sh", "-c"]
+    command:
+      - "for i in $$(seq 1 30); do nanoadmin migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanoadmin migrate up && nanoadmin config seed && echo 'admin init complete'"
+    environment:
+      NANO_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    restart: "no"
+
   # One-shot bootstrap: apply the collection manifests (with a retry loop for a
   # briefly-unreachable MongoDB) and seed the built-in catalogs.
   bus-init:
@@ -15,7 +30,7 @@ services:
       # `agent-types seed` runs before `prompts seed` on purpose: the prompt
       # seeder only writes onto types that already exist, so a fresh store with
       # the order reversed would come up with every built-in prompt blank.
-      - "for i in $$(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanobus migrate up && nanobus config seed && nanobus skills seed && nanobus permissions seed && nanobus agent-types seed && nanobus prompts seed && nanobus mcp seed && echo 'bus init complete'"
+      - "for i in $$(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanobus migrate up && nanobus skills seed && nanobus permissions seed && nanobus agent-types seed && nanobus prompts seed && nanobus mcp seed && echo 'bus init complete'"
     environment:
       # The MongoDB the store reads and writes. Required: the bus refuses to
       # start without it.
@@ -25,6 +40,9 @@ services:
       # catalog headers verbatim.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
     restart: "no"
+    depends_on:
+      admin-init:
+        condition: service_completed_successfully
 
   nanobus:
     build:
@@ -42,6 +60,8 @@ services:
       # so does every agent container the runner provisions. Override it from the
       # shell or .env; a deployment without one cannot talk to the bus at all.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Config writes are forwarded to the module that owns the collection.
+      NANOSEC_BUS_ADMIN_BASE_URL: http://nanoadmin:8080
     ports:
       - "14400:9000"
     depends_on:

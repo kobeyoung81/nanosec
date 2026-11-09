@@ -193,7 +193,7 @@ docker compose build nanosec
 ### 4. Configure channels and the agent
 
 Services load their configuration at startup from the bus (`service_config_items`),
-seeded by `nanobus config seed`. Bundled skills are seeded into the platform
+seeded by `nanoadmin config seed`. Bundled skills are seeded into the platform
 catalog by `nanobus skills seed` (both run by the `bus-init` container). Edit
 them in the portal at **Configs**, or with the CLI:
 
@@ -214,7 +214,7 @@ docker compose exec nanobus nanobus config get agent
 
 > `nanogateway` exits with "no channels enabled" unless at least one channel is
 > enabled in the bus config. The **web chat channel is enabled by default**
-> (`channels.web.enabled=true`, seeded by `nanobus config seed`) and listens on
+> (`channels.web.enabled=true`, seeded by `nanoadmin config seed`) and listens on
 > `8080` inside the compose network, published on host port `18080`; the portal also
 > proxies it same-origin for its Chat page.
 
@@ -240,7 +240,7 @@ export NANOSEC_BUS_DATABASE_URI="mongodb://nanosec:PASS@localhost:27017/nanobus?
 go run ./nanobus/cmd/nanobus migrate up
 
 # 2. Seed the built-in catalogs
-go run ./nanobus/cmd/nanobus config seed
+go run ./nanoadmin/cmd/nanoadmin config seed
 go run ./nanobus/cmd/nanobus skills seed
 go run ./nanobus/cmd/nanobus permissions seed
 go run ./nanobus/cmd/nanobus agent-types seed

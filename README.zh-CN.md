@@ -198,7 +198,7 @@ docker compose build nanosec
 
 ### 4. 配置通道与代理
 
-服务启动时从总线（`service_config_items`，由 `nanobus config seed` 初始化）加载配置。
+服务启动时从总线（`service_config_items`，由 `nanoadmin config seed` 初始化）加载配置。
 可在门户的 **Configs** 页面修改，或使用 CLI：
 
 ```bash
@@ -217,7 +217,7 @@ docker compose exec nanobus nanobus config get agent
 ```
 
 > 若未在总线配置中启用任何通道，`nanogateway` 会以 “no channels enabled” 退出。
-> **Web 聊天通道默认启用**（`channels.web.enabled=true`，由 `nanobus config seed` 写入），
+> **Web 聊天通道默认启用**（`channels.web.enabled=true`，由 `nanoadmin config seed` 写入），
 > 在 compose 网络内监听 `8080`、发布到宿主机 `18080`；门户也会同源代理它供聊天页使用。
 
 ### 5. 试运行
@@ -241,7 +241,7 @@ export NANOSEC_BUS_DATABASE_URI="mongodb://nanosec:PASS@localhost:27017/nanobus?
 go run ./nanobus/cmd/nanobus migrate up
 
 # 2. 写入内建目录
-go run ./nanobus/cmd/nanobus config seed
+go run ./nanoadmin/cmd/nanoadmin config seed
 go run ./nanobus/cmd/nanobus skills seed
 go run ./nanobus/cmd/nanobus permissions seed
 go run ./nanobus/cmd/nanobus agent-types seed

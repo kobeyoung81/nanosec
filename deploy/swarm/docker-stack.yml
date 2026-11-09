@@ -10,7 +10,7 @@
 #   docker run --rm -e NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
 #     kobeyoung81/nanobus:latest migrate up
 #   docker run --rm -e NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
-#     kobeyoung81/nanobus:latest config seed
+#     kobeyoung81/nanoadmin:nanosec config seed
 #   docker run --rm -e NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
 #     kobeyoung81/nanobus:latest config set runner backend swarm
 #

@@ -15,7 +15,7 @@ services:
     command:
       - "for i in $$(seq 1 30); do nanoadmin migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanoadmin migrate up && nanoadmin config seed && echo 'admin init complete'"
     environment:
-      NANO_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      NANOSEC_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
     restart: "no"
 
@@ -93,7 +93,7 @@ services:
     command:
       - "--addr=:6006"
       - "--models-dir=/models"
-      - "--bus-url=http://nanobus:9000"
+      - "--admin-url=http://nanoadmin:8080"
       - "--max-sessions=4"
       - "--threads=2"
     # Each recogniser decodes on two onnxruntime threads and up to four sessions
@@ -247,10 +247,10 @@ services:
     restart: unless-stopped
     environment:
       # Same database as every module, under the admin_ prefix.
-      NANO_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      NANOSEC_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
     ports:
-      - "${NANO_ADMIN_PORT:-14404}:8080"
+      - "${NANOSEC_ADMIN_PORT:-14404}:8080"
     depends_on:
       - nanobus
 

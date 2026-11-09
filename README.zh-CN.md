@@ -243,7 +243,7 @@ go run ./nanobus/cmd/nanobus migrate up
 # 2. 写入内建目录
 go run ./nanoadmin/cmd/nanoadmin config seed
 go run ./nanobus/cmd/nanobus skills seed
-go run ./nanobus/cmd/nanobus permissions seed
+go run ./nanoadmin/cmd/nanoadmin permissions seed
 go run ./nanobus/cmd/nanobus agent-types seed
 go run ./nanobus/cmd/nanobus prompts seed
 

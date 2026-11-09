@@ -312,7 +312,7 @@ export NANOSEC_BUS_INTERNAL_TOKEN="$(openssl rand -hex 24)"
 go run ./nanobus/cmd/nanobus migrate up
 go run ./nanoadmin/cmd/nanoadmin config seed
 go run ./nanobus/cmd/nanobus skills seed
-go run ./nanobus/cmd/nanobus permissions seed
+go run ./nanoadmin/cmd/nanoadmin permissions seed
 go run ./nanobus/cmd/nanobus agent-types seed
 go run ./nanobus/cmd/nanobus prompts seed
 

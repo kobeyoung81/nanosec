@@ -38,3 +38,6 @@
 	path = nanoartifacts
 	url = ../nanoartifacts.git
 	branch = master
+[submodule "nanoadmin"]
+	path = nanoadmin
+	url = git@gitee.com:kobeyoung81/nanoadmin.git

@@ -207,6 +207,23 @@ services:
     depends_on:
       - nanobus
 
+  # The admin domain: agent-type/model/capability/prompt/permission-key/audit
+  # and configuration catalogues. Owns the admin_ prefix; the bus keeps only
+  # messages and asks this service over HTTP for what it needs.
+  nanoadmin:
+    build:
+      context: ./nanoadmin
+    image: kobeyoung81/nanoadmin:nanosec
+    restart: unless-stopped
+    environment:
+      # Same database as every module, under the admin_ prefix.
+      NANO_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    ports:
+      - "${NANO_ADMIN_PORT:-14404}:8080"
+    depends_on:
+      - nanobus
+
   # Builds/tags the nanosec agent image (nanosec:latest) used by nanorunner to
   # provision per-user agent containers. Not started as part of `up`; build it
   # with: docker compose build nanosec

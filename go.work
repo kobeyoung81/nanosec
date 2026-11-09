@@ -9,6 +9,7 @@ use (
 	./nanoagent
 	./nanoauth
 	./nanoartifacts
+	./nanoadmin
 )
 
 replace github.com/xen0n/go-workwx/v2 v2.0.0-alpha.1 => ./nanogateway/go-workwx

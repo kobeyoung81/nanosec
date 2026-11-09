@@ -27,7 +27,7 @@ User / Chat Platform
 ```
 
 - **nanoprotocol** — Shared wire protocol (Go module, not a service): message envelope, 70 type constants, WebSocket client with auto-reconnect, REST/SSE helpers
-- **nanobus** — WebSocket message broker and the platform's only database holder (MongoDB); user/agent registry, per-user message queues, config store, runner registry, REST + SSE surface, and an `/auth/v1/*` reverse proxy to nanoauth
+- **nanobus** — message broker (WebSocket + REST + SSE): per-user message queues, runner registry and the platform's event stream. Configuration and the admin catalogues live in **nanoadmin**; the bus asks for what it needs over HTTP
 - **nanogateway** — Chat platform adapters (WeCom / Feishu / WeChat KF / Web Chat / CLI); routes inbound/outbound messages, sends ack on receipt, routes media attachments, validates JWTs for the web channel
 - **nanosec** — AI agent runtime; multi-agent router, ReAct loop, LLM providers, tools, sessions, skills, cron, subagents, and a hypervisor HTTP server
 - **nanorunner** — Container provisioning service; polls the bus for container requests and provisions/disposes per-user agents via Docker, Swarm, or Kubernetes backends with per-tier quotas
@@ -192,20 +192,20 @@ docker compose build nanosec
 
 ### 4. Configure channels and the agent
 
-Services load their configuration at startup from the bus (`service_config_items`),
+Services load their configuration at startup from the admin module (`admin_config`, served over HTTP),
 seeded by `nanoadmin config seed`. Bundled skills are seeded into the platform
 catalog by `nanobus skills seed` (both run by the `bus-init` container). Edit
 them in the portal at **Configs**, or with the CLI:
 
 ```bash
 # Enable the CLI channel (quick smoke test)
-docker compose exec nanobus nanobus config set gateway channels.cli.enabled true
-docker compose exec nanobus nanobus config set gateway channels.cli.userID alice
+docker compose exec nanoadmin nanoadmin config set gateway channels.cli.enabled true
+docker compose exec nanoadmin nanoadmin config set gateway channels.cli.userID alice
 
 # Set the LLM API key for the agent
-docker compose exec nanobus nanobus config set agent provider.apiKey sk-...
-docker compose exec nanobus nanobus config set agent provider.baseUrl https://api.openai.com/v1
-docker compose exec nanobus nanobus config set agent provider.defaultModel gpt-4o
+docker compose exec nanoadmin nanoadmin config set agent provider.apiKey sk-...
+docker compose exec nanoadmin nanoadmin config set agent provider.baseUrl https://api.openai.com/v1
+docker compose exec nanoadmin nanoadmin config set agent provider.defaultModel gpt-4o
 
 # Check current values
 docker compose exec nanobus nanobus config get gateway

@@ -88,6 +88,8 @@ services:
     restart: unless-stopped
     environment:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Configuration is served by the admin module; these services ask it over HTTP.
+      NANOSEC_ADMIN_URL: http://nanoadmin:8080
     command:
       - "--addr=:6006"
       - "--models-dir=/models"
@@ -118,6 +120,8 @@ services:
       # so this service holds no database credentials of its own.
       NANOAUTH_BUS_URL: http://nanobus:9000
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Configuration is served by the admin module; these services ask it over HTTP.
+      NANOSEC_ADMIN_URL: http://nanoadmin:8080
     ports:
       - "14401:8081"
     depends_on:
@@ -147,6 +151,8 @@ services:
       # so does every agent container the runner provisions. Override it from the
       # shell or .env; a deployment without one cannot talk to the bus at all.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Configuration is served by the admin module; these services ask it over HTTP.
+      NANOSEC_ADMIN_URL: http://nanoadmin:8080
     volumes:
       # The trust root of the platform: the runner must talk to the Docker
       # API to provision agent containers, so it holds effectively host-root
@@ -173,6 +179,8 @@ services:
       # so does every agent container the runner provisions. Override it from the
       # shell or .env; a deployment without one cannot talk to the bus at all.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Configuration is served by the admin module; these services ask it over HTTP.
+      NANOSEC_ADMIN_URL: http://nanoadmin:8080
     command: ["--bus-url", "ws://nanobus:9000"]
 
   nanoportal:
@@ -187,6 +195,8 @@ services:
       # so does every agent container the runner provisions. Override it from the
       # shell or .env; a deployment without one cannot talk to the bus at all.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Configuration is served by the admin module; these services ask it over HTTP.
+      NANOSEC_ADMIN_URL: http://nanoadmin:8080
     ports:
       - "14403:80"
     depends_on:

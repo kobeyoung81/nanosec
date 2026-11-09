@@ -34,7 +34,7 @@ echo "Tagging nanoprotocol $VERSION..."
 # describe ignores lightweight tags).
 (cd "$REPO_ROOT/nanoprotocol" && git tag -a "$VERSION" -m "$VERSION" && git push origin "$VERSION")
 
-for mod in nanobus nanogateway nanosec nanorunner; do
+for mod in nanobus nanogateway nanoagent nanoprovisioner; do
   echo "Updating $mod..."
   (
     cd "$REPO_ROOT/$mod" &&

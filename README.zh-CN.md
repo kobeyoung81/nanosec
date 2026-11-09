@@ -198,18 +198,18 @@ docker compose build nanosec
 
 ### 4. 配置通道与代理
 
-服务启动时从总线（`service_config_items`，由 `nanoadmin config seed` 初始化）加载配置。
+服务启动时从 admin 模块（`admin_config`，由 `nanoadmin config seed` 初始化，走 HTTP）加载配置。
 可在门户的 **Configs** 页面修改，或使用 CLI：
 
 ```bash
 # 启用 CLI 通道（快速冒烟测试）
-docker compose exec nanobus nanobus config set gateway channels.cli.enabled true
-docker compose exec nanobus nanobus config set gateway channels.cli.userID alice
+docker compose exec nanoadmin nanoadmin config set gateway channels.cli.enabled true
+docker compose exec nanoadmin nanoadmin config set gateway channels.cli.userID alice
 
 # 设置代理的 LLM API Key
-docker compose exec nanobus nanobus config set agent provider.apiKey sk-...
-docker compose exec nanobus nanobus config set agent provider.baseUrl https://api.openai.com/v1
-docker compose exec nanobus nanobus config set agent provider.defaultModel gpt-4o
+docker compose exec nanoadmin nanoadmin config set agent provider.apiKey sk-...
+docker compose exec nanoadmin nanoadmin config set agent provider.baseUrl https://api.openai.com/v1
+docker compose exec nanoadmin nanoadmin config set agent provider.defaultModel gpt-4o
 
 # 查看当前值
 docker compose exec nanobus nanobus config get gateway

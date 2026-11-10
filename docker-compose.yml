@@ -221,7 +221,11 @@ services:
     environment:
       # Its own database, not the bus's. Required: the service refuses to start
       # without it (a missing URI must not fall back to a default database).
-      NANOARTIFACTS_MONGO_URI: ${NANOARTIFACTS_MONGO_URI:?set NANOARTIFACTS_MONGO_URI in .env}
+      # One database, one connection string: the work library lives in the same
+      # database under the artifacts_ prefix. Deliberately derived from the
+      # platform URI so a stale NANOARTIFACTS_MONGO_URI in an old .env cannot
+      # silently point this service at the pre-merge database.
+      NANOARTIFACTS_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
       # HMAC key for the preview-session cookie the iframe carries. The cookie
       # is scoped to this service's API path; every request re-checks the
       # artifact's permissions, so revoking a share is immediate.

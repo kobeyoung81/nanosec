@@ -187,6 +187,10 @@ services:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
       # Configuration is served by the admin module; these services ask it over HTTP.
       NANOSEC_ADMIN_URL: http://nanoadmin:8080
+      # The agent rows and the conversation projection are the portal's; the two
+      # reads the channel needs (the user's agents, a session's metadata) go
+      # there instead of through the bus.
+      NANOSEC_PORTAL_URL: http://nanoportal:80
     command: ["--bus-url", "ws://nanobus:9000"]
 
   nanoportal:

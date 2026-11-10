@@ -68,6 +68,9 @@ services:
       # service still receives for them (a runtime status and a deleted type's
       # reference cleanup) are forwarded there.
       NANOSEC_BUS_PORTAL_BASE_URL: http://nanoportal:80
+      # The provisioning queue is the runner's; the console's container actions
+      # are forwarded to it.
+      NANOSEC_BUS_PROVISIONER_BASE_URL: http://nanorunner:8080
     ports:
       - "14400:9000"
     depends_on:
@@ -159,6 +162,12 @@ services:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
       # Configuration is served by the admin module; these services ask it over HTTP.
       NANOSEC_ADMIN_URL: http://nanoadmin:8080
+      # The provisioning queue is this service's now, so it opens the platform
+      # database and applies its own manifests.
+      NANOSEC_PROVISIONER_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      # Where the internal API listens; the bus forwards the console's container
+      # actions here (bus → runner, the same shape as bus → admin).
+      NANOSEC_PROVISIONER_ADDR: ":8080"
     volumes:
       # The trust root of the platform: the runner must talk to the Docker
       # API to provision agent containers, so it holds effectively host-root

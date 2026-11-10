@@ -64,6 +64,10 @@ services:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
       # Config writes are forwarded to the module that owns the collection.
       NANOSEC_BUS_ADMIN_BASE_URL: http://nanoadmin:8080
+      # Agent rows and their groups belong to the portal; the two writes this
+      # service still receives for them (a runtime status and a deleted type's
+      # reference cleanup) are forwarded there.
+      NANOSEC_BUS_PORTAL_BASE_URL: http://nanoportal:80
     ports:
       - "14400:9000"
     depends_on:

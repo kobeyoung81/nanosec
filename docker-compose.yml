@@ -124,8 +124,10 @@ services:
     image: kobeyoung81/nanoauth:nanosec
     restart: unless-stopped
     environment:
-      # Accounts, refresh tickets and the shared config all live behind the bus,
-      # so this service holds no database credentials of its own.
+      # Accounts, channel links, OAuth links and refresh tickets are this
+      # service's, so it holds the platform connection and declares their
+      # indexes. The bus is still asked for the token/user RPCs it forwards.
+      NANOSEC_BUS_DATABASE_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
       NANOAUTH_BUS_URL: http://nanobus:9000
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
       # Configuration is served by the admin module; these services ask it over HTTP.

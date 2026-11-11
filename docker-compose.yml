@@ -13,7 +13,7 @@ services:
     image: kobeyoung81/nanoadmin:nanosec
     entrypoint: ["sh", "-c"]
     command:
-      - "for i in $$(seq 1 30); do nanoadmin migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanoadmin migrate up && nanoadmin config seed && nanoadmin permissions seed && nanoadmin agent-types seed && nanoadmin prompts seed && nanoadmin skills seed && echo 'admin init complete'"
+      - "for i in $$(seq 1 30); do nanoadmin migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanoadmin migrate up && nanoadmin config seed && nanoadmin permissions seed && nanoadmin agent-types seed && nanoadmin prompts seed && nanoadmin skills seed && nanoadmin mcp seed && echo 'admin init complete'"
     environment:
       NANOSEC_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
@@ -32,7 +32,7 @@ services:
       # `agent-types seed` runs before `prompts seed` on purpose: the prompt
       # seeder only writes onto types that already exist, so a fresh store with
       # the order reversed would come up with every built-in prompt blank.
-      - "for i in $$(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanobus migrate up && nanobus mcp seed && echo 'bus init complete'"
+      - "for i in $$(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanobus migrate up && echo 'bus init complete'"
     environment:
       # The MongoDB the store reads and writes. Required: the bus refuses to
       # start without it.

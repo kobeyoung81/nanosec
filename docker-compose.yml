@@ -37,9 +37,8 @@ services:
       # The MongoDB the store reads and writes. Required: the bus refuses to
       # start without it.
       NANOSEC_BUS_DATABASE_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
-      # Needed by `nanobus mcp seed`: the first-party MCP entry stores this
-      # token as its Authorization header, because the agent runtime sends
-      # catalog headers verbatim.
+      # The bus reports its own administrators' actions to the admin module and
+      # authenticates to it with this shared token.
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
     restart: "no"
     depends_on:

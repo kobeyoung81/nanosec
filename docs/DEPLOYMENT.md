@@ -310,11 +310,13 @@ export NANOSEC_BUS_INTERNAL_TOKEN="$(openssl rand -hex 24)"
 
 # Store (the bus-init steps, in order)
 go run ./nanobus/cmd/nanobus migrate up
+go run ./nanoadmin/cmd/nanoadmin migrate up
 go run ./nanoadmin/cmd/nanoadmin config seed
-go run ./nanobus/cmd/nanobus skills seed
 go run ./nanoadmin/cmd/nanoadmin permissions seed
-go run ./nanobus/cmd/nanobus agent-types seed
-go run ./nanobus/cmd/nanobus prompts seed
+go run ./nanoadmin/cmd/nanoadmin agent-types seed
+go run ./nanoadmin/cmd/nanoadmin prompts seed
+go run ./nanoadmin/cmd/nanoadmin skills seed
+go run ./nanoadmin/cmd/nanoadmin mcp seed
 
 # Bus
 NANOSEC_BUS_NANOAUTH_BASE_URL="http://localhost:8081" \

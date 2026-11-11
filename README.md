@@ -193,9 +193,10 @@ docker compose build nanosec
 ### 4. Configure channels and the agent
 
 Services load their configuration at startup from the admin module (`admin_config`, served over HTTP),
-seeded by `nanoadmin config seed`. Bundled skills are seeded into the platform
-catalog by `nanobus skills seed` (both run by the `bus-init` container). Edit
-them in the portal at **Configs**, or with the CLI:
+seeded by `nanoadmin config seed`; the built-in catalogs (skills, prompts,
+agent types, MCP servers, permission keys) are `nanoadmin`'s too, and the
+`admin-init` container seeds them on every start. Edit them in the portal, or
+with the CLI:
 
 ```bash
 # Enable the CLI channel (quick smoke test)
@@ -236,15 +237,17 @@ command that touches the store takes the same `NANOSEC_BUS_DATABASE_URI`:
 ```bash
 export NANOSEC_BUS_DATABASE_URI="mongodb://nanosec:PASS@localhost:27017/nanobus?authSource=admin"
 
-# 1. Apply the collection manifests (the `bus-init` steps, in order)
+# 1. Apply the collection manifests (the `bus-init` and `admin-init` steps, in order)
 go run ./nanobus/cmd/nanobus migrate up
+go run ./nanoadmin/cmd/nanoadmin migrate up
 
-# 2. Seed the built-in catalogs
+# 2. Seed the built-in catalogs (admin-init runs all of these)
 go run ./nanoadmin/cmd/nanoadmin config seed
-go run ./nanobus/cmd/nanobus skills seed
 go run ./nanoadmin/cmd/nanoadmin permissions seed
-go run ./nanobus/cmd/nanobus agent-types seed
-go run ./nanobus/cmd/nanobus prompts seed
+go run ./nanoadmin/cmd/nanoadmin agent-types seed
+go run ./nanoadmin/cmd/nanoadmin prompts seed
+go run ./nanoadmin/cmd/nanoadmin skills seed
+go run ./nanoadmin/cmd/nanoadmin mcp seed
 
 # 3. Start the bus
 go run ./nanobus/cmd/nanobus

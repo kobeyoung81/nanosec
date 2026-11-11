@@ -237,15 +237,17 @@ docker compose run --rm nanogateway --bus-url ws://nanobus:9000 --message "Hello
 ```bash
 export NANOSEC_BUS_DATABASE_URI="mongodb://nanosec:PASS@localhost:27017/nanobus?authSource=admin"
 
-# 1. 应用集合清单（即 bus-init 的步骤，按序执行）
+# 1. 应用集合清单（即 bus-init 与 admin-init 的步骤，按序执行）
 go run ./nanobus/cmd/nanobus migrate up
+go run ./nanoadmin/cmd/nanoadmin migrate up
 
-# 2. 写入内建目录
+# 2. 写入内建目录（admin-init 会跑全套）
 go run ./nanoadmin/cmd/nanoadmin config seed
-go run ./nanobus/cmd/nanobus skills seed
 go run ./nanoadmin/cmd/nanoadmin permissions seed
-go run ./nanobus/cmd/nanobus agent-types seed
-go run ./nanobus/cmd/nanobus prompts seed
+go run ./nanoadmin/cmd/nanoadmin agent-types seed
+go run ./nanoadmin/cmd/nanoadmin prompts seed
+go run ./nanoadmin/cmd/nanoadmin skills seed
+go run ./nanoadmin/cmd/nanoadmin mcp seed
 
 # 3. 启动总线
 go run ./nanobus/cmd/nanobus

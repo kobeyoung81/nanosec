@@ -30,10 +30,6 @@
 	path = nanoui
 	url = ../nanoui.git
 	branch = master
-[submodule "nanoasr"]
-	path = nanoasr
-	url = ../nanoasr.git
-	branch = master
 [submodule "nanoartifacts"]
 	path = nanoartifacts
 	url = ../nanoartifacts.git

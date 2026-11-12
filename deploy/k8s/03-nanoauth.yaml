@@ -33,8 +33,6 @@ spec:
         - name: nanoauth
           image: kobeyoung81/nanoauth:latest
           env:
-            - name: NANOAUTH_BUS_URL
-              value: "http://nanobus:9000"
             - name: NANOSEC_BUS_INTERNAL_TOKEN
               valueFrom:
                 secretKeyRef:

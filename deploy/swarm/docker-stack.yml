@@ -39,7 +39,6 @@ services:
   nanoauth:
     image: kobeyoung81/nanoauth:latest
     environment:
-      NANOAUTH_BUS_URL: http://nanobus:9000
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?export NANOSEC_BUS_INTERNAL_TOKEN first}
     networks: [nanosec]
     ports:

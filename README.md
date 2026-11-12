@@ -275,7 +275,7 @@ See [docs/DEPLOYMENT.md](./docs/DEPLOYMENT.md) for full operations guidance, inc
 | `nanogateway` | `NANOSEC_GATEWAY_` | `NANOSEC_GATEWAY_BUS_URL=...` |
 | `nanosec` | `NANOSEC_` | `NANOSEC_OPENAI_API_KEY=...` |
 | `nanorunner` | `NANOSEC_RUNNER_` | `NANOSEC_RUNNER_BUS_URL=...` |
-| `nanoauth` | `NANOAUTH_` | `NANOAUTH_BUS_URL=http://nanobus:9000` |
+| `nanoauth` | `NANOAUTH_` | `NANOAUTH_ADDR=:8081` |
 | `nanoportal` | `NANO_PORTAL_` | `NANO_PORTAL_BUS_URL=http://nanobus:9000` |
 | `nanoui` (backend) | `NANOUI_BACKEND_` | `NANOUI_BACKEND_ADDR=:8088` |
 

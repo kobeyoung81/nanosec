@@ -322,10 +322,11 @@ go run ./nanoadmin/cmd/nanoadmin mcp seed
 NANOSEC_BUS_NANOAUTH_BASE_URL="http://localhost:8081" \
   go run ./nanobus/cmd/nanobus
 
-# Auth (separate terminal; holds no database credentials of its own, and generates
+# Auth (separate terminal; it holds the identity collections itself and generates
 # its JWT keypair into the platform config on first boot)
-NANOAUTH_BUS_URL="http://localhost:9000" \
+NANOSEC_ADMIN_URL="http://localhost:14404" \
   NANOSEC_BUS_INTERNAL_TOKEN="$NANOSEC_BUS_INTERNAL_TOKEN" \
+  NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
   go run ./nanoauth/cmd/nanoauth
 
 # Agent (per user, separate terminal)

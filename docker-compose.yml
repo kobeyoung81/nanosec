@@ -127,9 +127,8 @@ services:
     environment:
       # Accounts, channel links, OAuth links and refresh tickets are this
       # service's, so it holds the platform connection and declares their
-      # indexes. The bus is still asked for the token/user RPCs it forwards.
+      # indexes. It talks to no other module over the bus.
       NANOSEC_BUS_DATABASE_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
-      NANOAUTH_BUS_URL: http://nanobus:9000
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
       # Configuration is served by the admin module; these services ask it over HTTP.
       NANOSEC_ADMIN_URL: http://nanoadmin:8080
@@ -137,13 +136,15 @@ services:
       - "14401:8081"
     depends_on:
       # The keypair it generates on first boot is stored in the platform config,
-      # so the bus (and its seeded config) has to be up first.
-      bus-init:
+      # which the admin module serves — and admin's own init has to have seeded
+      # it before nanoauth asks.
+      admin-init:
         condition: service_completed_successfully
-      nanobus:
+      nanoadmin:
         condition: service_started
     # The RSA JWT keypair is generated on first boot and stored in the platform
-    # config (service_config_items, via the bus) — no key files or secrets to mount.
+    # configuration (admin_config, through the admin module) — no key files or
+    # secrets to mount.
 
   nanorunner:
     build:

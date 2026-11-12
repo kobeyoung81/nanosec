@@ -354,6 +354,15 @@ kubectl -n nanosec get pods
 kubectl -n nanosec port-forward svc/nanoportal 8080:80
 ```
 
+## 5.1 Identity keys (admin, artifacts, nginx)
+
+`nanoadmin` and `nanoartifacts` verify browser tokens themselves against
+nanoauth's key set. Both read `NANOAUTH_JWKS_URL`, defaulting to
+`http://nanoauth:8081/auth/v1/.well-known/jwks` — direct, not through the bus.
+The portal's nginx also exposes `/api/auth/v1/*` straight to `nanoauth`
+(rewritten to `/auth/v1/*`), so a client that only needs a token does not pass
+through the portal's Go server.
+
 ## 6. Standalone (no containers)
 
 Run MongoDB yourself, then build and run binaries from the workspace. Every command

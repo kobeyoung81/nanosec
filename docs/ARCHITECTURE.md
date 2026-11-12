@@ -80,7 +80,8 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Provisioner | Docker / Swarm / K8s | API | Create, restart, dispose agent containers |
 | Provisioner | Admin | HTTP | Its own configuration (`runner` component) |
 | Portal | Bus | HTTP | Users, container reads, capability reads/writes it forwards, the file/git/terminal proxy |
-| Portal | Admin | HTTP | Catalogue, configuration, audit, alert rules |
+| Portal | Admin | HTTP | Catalogue, configuration (masked reads), audit, alert rules |
+| Browser (direct, intended) | Admin | HTTP | Verifies the JWT and the Management/Audit roles itself; nginx does not route here yet — the console still reaches it through the portal, which asks for masked reads |
 | Portal | Mongo | driver | Its own collections |
 | Bus | Admin | HTTP | Config writes, audit reports, catalogue writes it receives from older clients |
 | Bus | Portal | HTTP | Agent-status write and a deleted type's reference cleanup |
@@ -88,7 +89,7 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Bus | `nanoauth` | HTTP | `/auth/v1/*` reverse proxy (kept for compatibility) |
 | `nanoauth` | Admin | HTTP | Its configuration (the JWT keypair, the `ldap.*` settings, the first-account switch) and the audit trail (`POST /api/v1/internal/audit`) |
 | `nanoadmin` | Bus | HTTP | Broadcast capability changes; ask the agent-data owner to clear a deleted type's references |
-| `nanoartifacts` | Bus | HTTP | JWKS (the bus proxies nanoauth's key set) |
+| `nanoartifacts` | `nanoauth` | HTTP | JWKS (direct; the bus no longer proxies identity) |
 | `nanoasr` | Admin | HTTP | Voice hotwords (`voice.realtime.hotwords`) |
 
 Two transports deserve a note:
@@ -353,6 +354,7 @@ nginx (in the portal image) is the single origin for the browser:
 | Path | Upstream |
 |---|---|
 | `/api/admin/v1/*`, `/api/user/v1/*`, `/internal/*`, `/healthz` | portal Go |
+| `/api/auth/v1/*` | `nanoauth`, rewritten to `/auth/v1/*` (identity no longer takes the bus hop) |
 | `/api/v1/*` | gateway (the web channel's REST) |
 | `/ws/agent/*` | gateway (chat and terminal sockets) |
 | `/ws/voice` | bus (dictation) |

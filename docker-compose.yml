@@ -272,7 +272,8 @@ services:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
       # The same keys the portal validates against: identity is nanoauth's, not
       # a local user table.
-      NANOAUTH_JWKS_URL: http://nanobus:9000/auth/v1/.well-known/jwks
+      # nanoauth's key set, read directly: the bus no longer proxies identity.
+      NANOAUTH_JWKS_URL: http://nanoauth:8081/auth/v1/.well-known/jwks
     depends_on:
       - nanobus
 
@@ -290,6 +291,9 @@ services:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
       # Deleting a type asks the bus (owner of the agent rows) to clear refs.
       NANOSEC_BUS_URL: http://nanobus:9000
+      # Browser tokens are verified here once nginx routes the console
+      # directly; without this URL only the internal token is accepted.
+      NANOAUTH_JWKS_URL: http://nanoauth:8081/auth/v1/.well-known/jwks
     ports:
       - "${NANOSEC_ADMIN_PORT:-14404}:8080"
     depends_on:

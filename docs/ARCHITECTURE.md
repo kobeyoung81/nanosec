@@ -81,7 +81,7 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Provisioner | Admin | HTTP | Its own configuration (`runner` component) |
 | Portal | Bus | HTTP | Users, container reads, capability reads/writes it forwards, the file/git/terminal proxy |
 | Portal | Admin | HTTP | Catalogue, configuration (masked reads), audit, alert rules |
-| Browser (direct, intended) | Admin | HTTP | Verifies the JWT and the Management/Audit roles itself; nginx does not route here yet — the console still reaches it through the portal, which asks for masked reads |
+| Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes; the service verifies the JWT and the Management/Audit roles itself, and masks secrets on reads |
 | Portal | Mongo | driver | Its own collections |
 | Bus | Admin | HTTP | Config writes, audit reports, catalogue writes it receives from older clients |
 | Bus | Portal | HTTP | Agent-status write and a deleted type's reference cleanup |
@@ -353,8 +353,11 @@ nginx (in the portal image) is the single origin for the browser:
 
 | Path | Upstream |
 |---|---|
-| `/api/admin/v1/*`, `/api/user/v1/*`, `/internal/*`, `/healthz` | portal Go |
-| `/api/auth/v1/*` | `nanoauth`, rewritten to `/auth/v1/*` (identity no longer takes the bus hop) |
+| `/api/user/v1/*`, `/internal/*`, `/healthz` | portal Go |
+| `/api/admin/v1/users*`, `/containers/*`, `/overview`, `/components*`, `/conversations*`, `/runtime`, `/runners*` | portal Go (the console views whose data it holds) |
+| `/api/admin/v1/directory/*` | `nanoauth`, rewritten to `/auth/v1/directory/*` |
+| `/api/admin/v1/*` (everything else: configs, catalogues, prompts, permission keys, alert rules, audit) | `nanoadmin` |
+| `/api/auth/v1/*` | `nanoauth`, rewritten to `/auth/v1/*` |
 | `/api/v1/*` | gateway (the web channel's REST) |
 | `/ws/agent/*` | gateway (chat and terminal sockets) |
 | `/ws/voice` | bus (dictation) |

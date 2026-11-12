@@ -169,8 +169,15 @@ services:
       # database and applies its own manifests.
       NANOSEC_PROVISIONER_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
       # Where the internal API listens; the bus forwards the console's container
-      # actions here (bus → runner, the same shape as bus → admin).
+      # actions here (bus → runner, the same shape as bus → admin), and the
+      # terminal bridge is dialed here by the gateway.
       NANOSEC_PROVISIONER_ADDR: ":8080"
+      # Hypervisor tunnels terminate here now. Containers are told where to dial
+      # through runner.tunnelUrl; this value is what they get.
+      NANOSEC_RUNNER_TUNNEL_URL: ws://nanorunner:8080
+      # The terminal bridge re-checks agent ownership against the module that
+      # owns the rows.
+      NANOSEC_PORTAL_URL: http://nanoportal:80
     volumes:
       # The trust root of the platform: the runner must talk to the Docker
       # API to provision agent containers, so it holds effectively host-root
@@ -203,6 +210,9 @@ services:
       # reads the channel needs (the user's agents, a session's metadata) go
       # there instead of through the bus.
       NANOSEC_PORTAL_URL: http://nanoportal:80
+      # Tunnels terminate at the provisioner, so the terminal bridge is dialed
+      # there first (the bus stays as a fallback for containers not yet restarted).
+      NANOSEC_PROVISIONER_URL: http://nanorunner:8080
     command: ["--bus-url", "ws://nanobus:9000"]
 
   nanoportal:

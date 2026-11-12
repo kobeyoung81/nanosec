@@ -104,6 +104,17 @@ Two transports deserve a note:
   `Last-Event-ID`; the bus replays from a per-channel ring buffer (1000 events). The
   older `poll_outbound` RPC still exists in the protocol and in the bus, but the
   gateway no longer calls it.
+- **Planned, not implemented: streaming keyed per conversation.** Today both the
+  buffer and the subscription are keyed by channel, so every user on a channel
+  shares one 1000-event window and one id sequence. The plan is one key per
+  conversation (`(channel, chat_id)`): the buffer moves into `bus_stream_events` —
+  a regular collection, because `capped` is collection-wide, has no TTL and cannot
+  be sharded — indexed `{chat_id:1, _id:1}` with a 600-second TTL and a
+  per-conversation trim to 1000 events; the gateway subscribes per open
+  conversation; and a cursor older than the retention window gets an explicit
+  `reset` instead of a silent gap. Rationale, scale figures and the triggers for
+  hourly partitions / sharding are in `plans/arch-upgrade-execution.md` (D6, D9,
+  D10).
 
 ### 1.4 Data ownership
 
@@ -248,7 +259,8 @@ Surface:
   `/api/v1/outbound/complete` — the REST spelling of the same operations.
 - `GET /api/v1/outbound/stream?channel=` — per-channel SSE with `Last-Event-ID`
   replay from a 1000-event ring buffer. Chunks and completions live only here; only
-  a non-streaming outbound message is also written to the queue.
+  a non-streaming outbound message is also written to the queue. (A per-conversation
+  key and a database-backed buffer are planned — see §1.3.)
 - `GET /api/v1/events/stream` — change notifications (config changes, agent changes,
   capability changes) that the agent and the portal subscribe to.
 - `GET /ws/tunnel/{name}`, `GET /ws/hypervisor`, `POST /api/v1/tunnels` — the tunnel
@@ -572,6 +584,7 @@ Agent child (poll every 500 ms)
   ▼
 Bus
   9. append to the channel's ring buffer, broadcast over SSE
+     (planned: per-conversation buffer in `bus_stream_events` — §1.3)
  10. a non-streaming outbound is also written to bus_outbound_queue
   │
   ▼

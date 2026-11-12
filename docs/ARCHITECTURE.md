@@ -45,7 +45,7 @@ or restarted on its own. Three rules hold the split together:
 |---|---|---|---|
 | `nanobus` | `nanobus` | Message transport: HTTP RPC (`POST /api/v1/rpc`), REST, SSE; per-user inbound/outbound queues; agent tunnel (files, git, terminals); runner registry; WeChat KF cursors. It forwards the console's writes to the module that owns the collection instead of performing them. | **yes** — `bus_*`, `sys_*` (reads `provisioner_*` for the console) |
 | `nanogateway` | `nanogateway` | Channel adapters (CLI, WeCom, Feishu, web chat, WeChat KF); identity resolution; one SSE subscription per channel for outbound delivery. | no |
-| `nanoportal` | `nanoportal` (Go server + nginx + React) | The user console and the user-facing data: agents, agent groups, binding preferences, the conversation projection. Proxies the console's catalogue/config/audit pages to the admin module and the file/git/terminal surface to the bus. | **yes** — `portal_*` |
+| `nanoportal` | `nanoportal` (Go server + nginx + React) | The user console and the user-facing data: agents, agent groups, binding preferences, the conversation projection, the console's operational views (users, containers, overview, conversations, runtime, runners). nginx sends the catalogue/config/audit pages straight to the admin module and identity straight to nanoauth; the portal proxies only the file/git/terminal surface to the bus and provisioner. | **yes** — `portal_*` |
 | `nanoagent` | `nanosec` (one container per user) | The user's runtime. Inside the container a **hypervisor** supervises one child process per agent; each child runs the ReAct loop, tools, skills, memory, cron and its own JSONL sessions. | no (files live in the container volume) |
 | `nanoprovisioner` | `nanoprovisioner` | Consumes the provisioning queue; creates, restarts and disposes agent containers through docker / swarm / k8s; applies per-tier quotas. | **yes** — `provisioner_*` |
 | `nanoauth` | `nanoauth` | Accounts, channel links, OAuth links, refresh tickets, git shortcuts, per-user secrets; login, RS256 tokens and JWKS; corporate-directory login. | **yes** — `auth_*` |
@@ -63,6 +63,7 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | From | To | Transport | Purpose |
 |---|---|---|---|
 | Browser | portal's nginx | HTTPS | Everything, one origin (see §3.4 for the path map) |
+| Browser | `nanoauth` | HTTP | Login, registration, refresh and logout under `/api/auth/v1/*` (nginx rewrites to `/auth/v1/*`) |
 | portal nginx | `nanoportal` Go | HTTP | Console API (`/api/admin/v1/*`, `/api/user/v1/*`), `/internal/*`, `/healthz` |
 | portal nginx | `nanogateway` | HTTP + WS | Web chat (`/ws/agent/*`) and its REST (`/api/v1/*`) |
 | portal nginx | `nanobus` | WS | Dictation socket (`/ws/voice`) |
@@ -80,7 +81,8 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Provisioner | Docker / Swarm / K8s | API | Create, restart, dispose agent containers |
 | Provisioner | Admin | HTTP | Its own configuration (`runner` component) |
 | Portal | Bus | HTTP | Users, container reads, capability reads/writes it forwards, the file/git/terminal proxy |
-| Portal | Admin | HTTP | Catalogue, configuration (masked reads), audit, alert rules |
+| Portal | Admin | HTTP | The console views it still serves need catalogue values (e.g. agent rows); reads ask for masked values |
+| Portal | `nanoauth` | HTTP | JWKS for token validation (direct; the bus proxy is legacy) |
 | Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes; the service verifies the JWT and the Management/Audit roles itself, and masks secrets on reads |
 | Portal | Mongo | driver | Its own collections |
 | Bus | Admin | HTTP | Config writes, audit reports, catalogue writes it receives from older clients |
@@ -275,8 +277,8 @@ Surface:
   The gateway dials the provisioner's bridge first and falls back to this one for
   containers that still connect to the bus.
 - `GET /ws/voice?session=` — the dictation socket (§4.5).
-- `/auth/v1/*` — reverse proxy to nanoauth (kept for compatibility; the portal calls
-  nanoauth through its own proxy).
+- `/auth/v1/*` (and `/api/auth/v1/*`) — reverse proxy to nanoauth. Kept for older
+  clients; the console, the work library and nginx all reach nanoauth directly now.
 - The console's read surface: users and user accounts, containers, runners, queues,
   activity, overview counts, WeChat KF counts.
 

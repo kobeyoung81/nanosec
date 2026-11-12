@@ -360,8 +360,11 @@ kubectl -n nanosec port-forward svc/nanoportal 8080:80
 nanoauth's key set. Both read `NANOAUTH_JWKS_URL`, defaulting to
 `http://nanoauth:8081/auth/v1/.well-known/jwks` — direct, not through the bus.
 The portal's nginx also exposes `/api/auth/v1/*` straight to `nanoauth`
-(rewritten to `/auth/v1/*`), so a client that only needs a token does not pass
-through the portal's Go server.
+(rewritten to `/auth/v1/*`), and the front end uses it for login, registration,
+refresh and logout: the portal is not in the identity path at all. Its own token
+validation reads the key set directly (`NANO_PORTAL_JWKS_URL`, default
+`http://nanoauth:8081/auth/v1/.well-known/jwks`), so a bus outage does not lock
+anyone out.
 
 The console's `/api/admin/v1/*` is split at nginx by the module that owns each
 route: configuration, catalogues, prompts, permission keys, alert rules and audit

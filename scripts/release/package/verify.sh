@@ -8,7 +8,7 @@ check() {
 }
 
 echo "== images"
-for i in nanobus nanoauth nanorunner nanogateway nanoportal nanoasr nanosec; do
+for i in nanobus nanoauth nanorunner nanogateway nanoportal nanosec; do
   if docker image inspect "kobeyoung81/$i:latest" >/dev/null 2>&1; then echo "OK   image $i"; else echo "FAIL image $i"; FAIL=1; fi
 done
 

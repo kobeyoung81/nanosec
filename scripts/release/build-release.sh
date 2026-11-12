@@ -27,7 +27,7 @@ done
 }
 
 PKG=scripts/release/package
-IMAGES="nanobus nanoauth nanoprovisioner nanogateway nanoportal nanoasr nanoagent"
+IMAGES="nanobus nanoauth nanoprovisioner nanogateway nanoportal nanoagent"
 NAME="myriadmind-release-$DATE"
 DEST="$OUT/$NAME"
 COMMIT="$(git rev-parse HEAD)"

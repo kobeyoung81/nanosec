@@ -77,74 +77,27 @@ services:
       bus-init:
         condition: service_completed_successfully
 
-  # Local speech-to-text for the composer's dictation, dialed by the bus as an
-  # ordinary model provider (base_url http://nanoasr:6006/v1). The model and the
-  # sherpa-onnx libraries are baked in at build time, so nothing is mounted and
-  # the container never reaches outside the compose network.
-  #
-  # Not published to the host: the bus is the only caller. The one thing it reads
-  # back from the platform is the hotword list (voice -> realtime.hotwords), which
-  # is why it holds the internal token: sherpa takes hotwords when a recogniser is
-  # built, so this service polls the config and rebuilds rather than taking a list
-  # per request.
-  nanoasr:
-    build:
-      context: ./nanoasr
-      args:
-        # A punctuation model is optional (279 MB); set to 1 to bake it in.
-        PUNCT_MODEL: ""
-    image: kobeyoung81/nanoasr:nanosec
-    restart: unless-stopped
-    environment:
-      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
-      # Configuration is served by the admin module; these services ask it over HTTP.
-      NANOSEC_ADMIN_URL: http://nanoadmin:8080
-    command:
-      - "--addr=:6006"
-      - "--models-dir=/models"
-      - "--admin-url=http://nanoadmin:8080"
-      - "--max-sessions=4"
-      - "--threads=2"
-    # Each recogniser decodes on two onnxruntime threads and up to four sessions
-    # may run at once, so the cap is what keeps a busy moment from eating the whole
-    # four-core host (which also runs twenty-odd other containers). With hotwords on
-    # a decode costs about 2.5x what greedy search does, so this is the number that
-    # decides whether four overlapping dictations stay comfortable.
-    cpus: "3.0"
-    mem_limit: 1.5g
-    healthcheck:
-      test: ["CMD", "nanoasr", "--healthcheck"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
+  # Identity: accounts, tokens and JWKS. It owns the auth_ collections and talks
+  # to the admin module for its configuration and audit trail.
   nanoauth:
     build:
       context: ./nanoauth
     image: kobeyoung81/nanoauth:nanosec
     restart: unless-stopped
     environment:
-      # Accounts, channel links, OAuth links and refresh tickets are this
-      # service's, so it holds the platform connection and declares their
-      # indexes. It talks to no other module over the bus.
-      NANOSEC_BUS_DATABASE_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
+      # Identity's own collections live in the platform database.
+      NANOAUTH_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
-      # Configuration is served by the admin module; these services ask it over HTTP.
+      # Configuration (the JWT keypair, directory settings) comes from admin.
       NANOSEC_ADMIN_URL: http://nanoadmin:8080
+      NANOAUTH_ADDR: ":8081"
     ports:
-      - "14401:8081"
+      - "${NANOAUTH_PORT:-14401}:8081"
     depends_on:
-      # The keypair it generates on first boot is stored in the platform config,
-      # which the admin module serves — and admin's own init has to have seeded
-      # it before nanoauth asks.
       admin-init:
         condition: service_completed_successfully
       nanoadmin:
         condition: service_started
-    # The RSA JWT keypair is generated on first boot and stored in the platform
-    # configuration (admin_config, through the admin module) — no key files or
-    # secrets to mount.
 
   nanorunner:
     build:

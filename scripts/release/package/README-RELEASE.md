@@ -16,7 +16,6 @@ myriadmind-release-__DATE__/
 │   ├── nanorunner.tar      kobeyoung81/nanorunner:latest
 │   ├── nanogateway.tar     kobeyoung81/nanogateway:latest
 │   ├── nanoportal.tar      kobeyoung81/nanoportal:latest
-│   ├── nanoasr.tar         kobeyoung81/nanoasr:latest
 │   └── nanosec.tar         kobeyoung81/nanosec:latest   ← agent 镜像（~1.6G）
 ├── compose/
 │   ├── docker-compose.yml

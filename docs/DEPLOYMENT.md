@@ -363,6 +363,13 @@ The portal's nginx also exposes `/api/auth/v1/*` straight to `nanoauth`
 (rewritten to `/auth/v1/*`), so a client that only needs a token does not pass
 through the portal's Go server.
 
+The console's `/api/admin/v1/*` is split at nginx by the module that owns each
+route: configuration, catalogues, prompts, permission keys, alert rules and audit
+go to `nanoadmin` (it verifies the JWT and the Management/Audit roles itself);
+users, containers, the overview, component summaries, conversations, runtime and
+runners stay in the portal; directory diagnostics go to `nanoauth`
+(`/auth/v1/directory/*`). No module proxies another module's console routes.
+
 ## 6. Standalone (no containers)
 
 Run MongoDB yourself, then build and run binaries from the workspace. Every command

@@ -104,22 +104,22 @@ Two transports deserve a note:
   `normalizeBaseURL` turns it into `http://`. WebSockets remain only where a stream
   of frames is the point: the agent tunnel, the terminal bridge, the dictation socket
   and the browser's chat socket.
-- **Outbound is SSE, not polling.** The gateway opens one `GET
-  /api/v1/outbound/stream?channel=<name>` per channel and reconnects with
-  `Last-Event-ID`; the bus replays from a per-channel ring buffer (1000 events). The
-  older `poll_outbound` RPC still exists in the protocol and in the bus, but the
+- **Outbound is SSE, not polling.** Chunks and completions are written to
+  `bus_stream_events`, keyed by conversation (`channel` + `chat_id`): a regular
+  collection (not `capped` — capped is collection-wide, has no TTL and cannot be
+  sharded), indexed `{channel:1, chat_id:1, _id:1}` with a 600-second TTL on `at`
+  and a per-conversation trim to the newest 1000 events. A subscriber asks
+  `GET /api/v1/outbound/stream?channel=&chat_id=` and reconnects with
+  `Last-Event-ID` (the event's ObjectId hex); replay and live delivery are the same
+  query, so any replica can serve it. A cursor older than the retained window — or
+  one this process cannot parse — gets an explicit `reset` event instead of a
+  silent gap.
+- **Legacy channel subscriptions.** `GET /api/v1/outbound/stream?channel=` without
+  `chat_id` still reads the in-memory per-channel ring (1000 events) for gateways
+  that have not been updated; the bus feeds both. The gateway's per-conversation
+  subscription is the next step (see `plans/arch-upgrade-execution.md` §13).
+- **`poll_outbound`** remains in the protocol and the bus for older clients; the
   gateway no longer calls it.
-- **Planned, not implemented: streaming keyed per conversation.** Today both the
-  buffer and the subscription are keyed by channel, so every user on a channel
-  shares one 1000-event window and one id sequence. The plan is one key per
-  conversation (`(channel, chat_id)`): the buffer moves into `bus_stream_events` —
-  a regular collection, because `capped` is collection-wide, has no TTL and cannot
-  be sharded — indexed `{chat_id:1, _id:1}` with a 600-second TTL and a
-  per-conversation trim to 1000 events; the gateway subscribes per open
-  conversation; and a cursor older than the retention window gets an explicit
-  `reset` instead of a silent gap. Rationale, scale figures and the triggers for
-  hourly partitions / sharding are in `plans/arch-upgrade-execution.md` (D6, D9,
-  D10).
 
 ### 1.4 Data ownership
 
@@ -261,10 +261,11 @@ Surface:
 - `POST /api/v1/rpc` — the message dispatch above.
 - `POST /api/v1/inbound`, `/api/v1/outbound`, `/api/v1/outbound/chunk`,
   `/api/v1/outbound/complete` — the REST spelling of the same operations.
-- `GET /api/v1/outbound/stream?channel=` — per-channel SSE with `Last-Event-ID`
-  replay from a 1000-event ring buffer. Chunks and completions live only here; only
-  a non-streaming outbound message is also written to the queue. (A per-conversation
-  key and a database-backed buffer are planned — see §1.3.)
+- `GET /api/v1/outbound/stream?channel=&chat_id=` — per-conversation SSE with
+  `Last-Event-ID` replay from `bus_stream_events` (600 s TTL, 1000 events per
+  conversation, `reset` for an expired cursor). Without `chat_id` the route still
+  serves the legacy per-channel ring. Chunks and completions live here; only a
+  non-streaming outbound message is also written to the queue.
 - `GET /api/v1/events/stream` — change notifications (config changes, agent changes,
   capability changes) that the agent and the portal subscribe to.
 - `GET /ws/hypervisor` — the hypervisor tunnel, kept only for containers whose
@@ -599,12 +600,12 @@ Agent child (poll every 500 ms)
   │  POST /api/v1/outbound/chunk, /api/v1/outbound/complete
   ▼
 Bus
-  9. append to the channel's ring buffer, broadcast over SSE
-     (planned: per-conversation buffer in `bus_stream_events` — §1.3)
+  9. append to `bus_stream_events` (channel + chat_id), wake the conversation's
+     subscribers, and keep feeding the legacy channel ring (§1.3)
  10. a non-streaming outbound is also written to bus_outbound_queue
   │
   ▼
-Gateway (SSE subscription for that channel)
+Gateway (SSE subscription; per channel today, per conversation next)
  11. aggregate chunks per message_id, deliver to the platform
  12. on complete, deliver the assembled message (or the error notice)
 ```

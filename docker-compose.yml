@@ -186,6 +186,28 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     command: ["--bus-url", "ws://nanobus:9000", "--runner-id", "nanorunner"]
 
+  # The workspace surface: the file browser, previews and the git panel. It holds
+  # no data — the bytes live in the agent container's volume, the agent rows in
+  # the portal — so it scales like any other stateless module.
+  nanoworkspace:
+    build:
+      context: ./nanoworkspace
+    image: kobeyoung81/nanoworkspace:nanosec
+    restart: unless-stopped
+    environment:
+      NANOSEC_WORKSPACE_ADDR: ":8080"
+      # Browser tokens are verified here against nanoauth's key set.
+      NANOAUTH_JWKS_URL: http://nanoauth:8081/auth/v1/.well-known/jwks
+      # Who owns this agent (the portal), where the tunnel terminates (the
+      # provisioner) and the fallback for containers not yet restarted.
+      NANOSEC_PORTAL_URL: http://nanoportal:80
+      NANOSEC_PROVISIONER_URL: http://nanorunner:8080
+      NANOSEC_BUS_URL: http://nanobus:9000
+      NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+    depends_on:
+      - nanoportal
+      - nanorunner
+
   # Chat platform gateway. Requires at least one channel enabled in the bus  # config (portal → Configs → gateway, e.g. channels.web.enabled=true is the
   # default). The web channel (:8080) serves the portal's browser chat and is
   # published so browsers can reach it (see VITE_GATEWAY_URL in nanoportal).

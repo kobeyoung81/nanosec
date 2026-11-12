@@ -263,10 +263,16 @@ Surface:
   key and a database-backed buffer are planned — see §1.3.)
 - `GET /api/v1/events/stream` — change notifications (config changes, agent changes,
   capability changes) that the agent and the portal subscribe to.
-- `GET /ws/tunnel/{name}`, `GET /ws/hypervisor`, `POST /api/v1/tunnels` — the tunnel
-  an agent's hypervisor registers; the bus then proxies `/api/v1/files/{agentID}/*`,
-  `/api/v1/git/{agentID}/*` and the terminal bridge to it.
+- `GET /ws/hypervisor` — the hypervisor tunnel, kept only for containers whose
+  image still dials the bus. Tunnels terminate at the provisioner now
+  (`GET /ws/hypervisor` there, registry in `provisioner_tunnels`); when the bus
+  holds no connection for a name it relays the request to the provisioner, which
+  is what lets a file or git call reach a container regardless of which module
+  it connected to. The bus proxies `/api/v1/files/{agentID}/*`,
+  `/api/v1/git/{agentID}/*` and the terminal bridge through that tunnel.
 - `GET /ws/terminal` — the browser terminal bridge (the gateway pumps frames here).
+  The gateway dials the provisioner's bridge first and falls back to this one for
+  containers that still connect to the bus.
 - `GET /ws/voice?session=` — the dictation socket (§4.5).
 - `/auth/v1/*` — reverse proxy to nanoauth (kept for compatibility; the portal calls
   nanoauth through its own proxy).

@@ -23,7 +23,7 @@ nanogateway ──HTTP + SSE──► nanobus ◄──HTTP + SSE── nanoagen
 其他模块的数据一律通过内部 HTTP 面（带共享令牌）读取。总线只负责消息。
 
 - **nanoprotocol** — 共享契约（Go 模块，非服务）：消息信封、类型常量、各服务使用的 HTTP/SSE 客户端
-- **nanobus** — 消息：按用户队列、事件流（SSE）、runner 与隧道的转发、nanoauth JWKS 的反向代理
+- **nanobus** — 消息：按用户队列、事件流（SSE）、runner 的转发、nanoauth JWKS 的反向代理（hypervisor 隧道已归 provisioner，总线只留旧容器的回落）
 - **nanogateway** — 渠道适配器（企业微信 / 飞书 / 微信客服 / Web 聊天 / CLI）：身份解析、出入站路由、媒体、Web 渠道的 JWT 校验
 - **nanoagent** — 代理运行时（二进制名 `nanosec`，每用户一个）：多代理路由、ReAct 循环、LLM provider、工具、会话、技能、定时任务、子代理与 hypervisor
 - **nanoprovisioner** — 容器供给：容器请求队列、runner 注册表，以及 Docker / Swarm / Kubernetes 三种后端与分档配额
@@ -179,14 +179,14 @@ docker compose up -d
 
 | 服务 | 宿主端口 | 用途 |
 |------|----------|------|
-| `nanobus` | 14400 → 9000 | 消息：REST、SSE、隧道、JWKS 反向代理 |
+| `nanobus` | 14400 → 9000 | 消息：REST、SSE、隧道回落、JWKS 反向代理 |
 | `nanoauth` | 14401 → 8081 | 身份：注册、令牌、JWKS |
 | `nanogateway` | 14402 → 8080 | 渠道适配器；Web 聊天通道由门户同源代理 |
 | `nanoportal` | 14403 → 80 | 控制台（并通过它的 nginx 代理网关的 Web 通道与作品库） |
 | `nanoadmin` | 14404 → 8080 | 配置与各类目录 |
 | `nanoartifacts` | – | 作品库（经门户的 `/nanoartifacts/` 访问） |
 | `nanoasr` | – | 本地语音识别（由总线调用） |
-| `nanorunner` | – | 容器供给（需要宿主机的 `docker.sock`） |
+| `nanorunner` | – | 容器供给与 hypervisor 隧道（需要宿主机的 `docker.sock`） |
 
 `admin-init` 先跑（应用自己的清单，再执行 `config`、`permissions`、`agent-types`、
 `prompts`、`skills`、`mcp` 六个 seed），随后 `bus-init` 应用自己的清单，最后各服务启动。

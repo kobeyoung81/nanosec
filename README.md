@@ -25,7 +25,7 @@ service writes only its own prefix; everything else is read over the internal HT
 surfaces with the shared token. The bus carries messages and owns nothing else.
 
 - **nanoprotocol** — shared contract (Go module, not a service): the message envelope, the type constants, and the HTTP/SSE client the services use
-- **nanobus** — messaging: per-user queues, the event stream (SSE), the runner and tunnel plumbing, and the reverse proxy to `nanoauth`'s JWKS
+- **nanobus** — messaging: per-user queues, the event stream (SSE), the runner plumbing, and the reverse proxy to `nanoauth`'s JWKS (hypervisor tunnels terminate at the provisioner; the bus keeps a fallback for containers that still dial it)
 - **nanogateway** — channel adapters (WeCom / Feishu / WeChat KF / web chat / CLI): identity resolution, inbound and outbound routing, media, JWKS validation for the web channel
 - **nanoagent** — the agent runtime (binary `nanosec`, one per user): multi-agent routing, the ReAct loop, LLM providers, tools, sessions, skills, cron, subagents and the hypervisor
 - **nanoprovisioner** — container provisioning: the container-request queue, the runner registry, and the Docker / Swarm / Kubernetes backends with per-tier quotas
@@ -186,14 +186,14 @@ This starts:
 
 | Service | Host port | Purpose |
 |---------|-----------|---------|
-| `nanobus` | 14400 → 9000 | Messaging: REST, SSE, the tunnel, the JWKS proxy |
+| `nanobus` | 14400 → 9000 | Messaging: REST, SSE, the tunnel fallback, the JWKS proxy |
 | `nanoauth` | 14401 → 8081 | Identity: registration, tokens, JWKS |
 | `nanogateway` | 14402 → 8080 | Channel adapters; the web chat channel is proxied same-origin by the portal |
 | `nanoportal` | 14403 → 80 | The console (and, through its nginx, the gateway's web channel and the work library) |
 | `nanoadmin` | 14404 → 8080 | Configuration and the catalogues |
 | `nanoartifacts` | – | Work library (reached through the portal's `/nanoartifacts/`) |
 | `nanoasr` | – | Local speech-to-text (called by the bus) |
-| `nanorunner` | – | Container provisioning (needs the host's `docker.sock`) |
+| `nanorunner` | – | Container provisioning and hypervisor tunnels (needs the host's `docker.sock`) |
 
 `admin-init` runs first (its manifests, then the `config`, `permissions`,
 `agent-types`, `prompts`, `skills` and `mcp` seeds), then `bus-init` (its own

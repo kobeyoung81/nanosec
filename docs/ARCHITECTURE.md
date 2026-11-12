@@ -86,8 +86,7 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Bus | Portal | HTTP | Agent-status write and a deleted type's reference cleanup |
 | Bus | Provisioner | HTTP | The console's container actions |
 | Bus | `nanoauth` | HTTP | `/auth/v1/*` reverse proxy (kept for compatibility) |
-| `nanoauth` | Admin | HTTP | Its configuration: the JWT keypair, the `ldap.*` settings |
-| `nanoauth` | Bus | HTTP | Audit reports (`POST /api/v1/audit`, forwarded to admin) |
+| `nanoauth` | Admin | HTTP | Its configuration (the JWT keypair, the `ldap.*` settings, the first-account switch) and the audit trail (`POST /api/v1/internal/audit`) |
 | `nanoadmin` | Bus | HTTP | Broadcast capability changes; ask the agent-data owner to clear a deleted type's references |
 | `nanoartifacts` | Bus | HTTP | JWKS (the bus proxies nanoauth's key set) |
 | `nanoasr` | Admin | HTTP | Voice hotwords (`voice.realtime.hotwords`) |
@@ -480,7 +479,10 @@ why several browser tabs must coordinate (the portal serialises refreshes with a
 `navigator.locks` lock and re-reads the stored token after acquiring it).
 
 The first account created on a fresh installation is promoted to administrator once,
-atomically, when `auth.firstUserIsAdmin` is on.
+atomically, when `auth.firstUserIsAdmin` is on. The rule runs here, next to the
+collection it changes: registration writes the account in this service, so a sign-up
+does not need the bus to be up (it used to call a create endpoint the bus forwarded
+straight back to the internal surface).
 
 The `/internal/v1/*` surface (shared token) is how the bus and the portal reach
 accounts, links, shortcuts and per-user secrets. It refuses requests when

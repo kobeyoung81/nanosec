@@ -114,10 +114,17 @@ Two transports deserve a note:
   query, so any replica can serve it. A cursor older than the retained window — or
   one this process cannot parse — gets an explicit `reset` event instead of a
   silent gap.
-- **Legacy channel subscriptions.** `GET /api/v1/outbound/stream?channel=` without
-  `chat_id` still reads the in-memory per-channel ring (1000 events) for gateways
-  that have not been updated; the bus feeds both. The gateway's per-conversation
-  subscription is the next step (see `plans/arch-upgrade-execution.md` §13).
+- **Conversation subscriptions.** The gateway opens one SSE per
+  `(channel, chat_id)` when it dispatches an inbound message. It reads
+  `GET /api/v1/outbound/cursor` *before* posting the message, so the subscription
+  starts where the conversation ends: the coming reply is not missed and the
+  previous turn is not replayed. A subscription closes on `complete`, after ten
+  idle minutes, or by evicting the oldest beyond 200 per adapter; one that cannot
+  connect within 30 seconds releases its key so the reply is not lost.
+- **Legacy channel subscription.** `GET /api/v1/outbound/stream?channel=` without
+  `chat_id` still reads the in-memory per-channel ring (1000 events). It remains
+  as the delivery path for conversations with no dedicated subscription (a cron
+  turn) and skips conversations that have one, so nothing is delivered twice.
 - **`poll_outbound`** remains in the protocol and the bus for older clients; the
   gateway no longer calls it.
 
@@ -261,6 +268,8 @@ Surface:
 - `POST /api/v1/rpc` — the message dispatch above.
 - `POST /api/v1/inbound`, `/api/v1/outbound`, `/api/v1/outbound/chunk`,
   `/api/v1/outbound/complete` — the REST spelling of the same operations.
+- `GET /api/v1/outbound/cursor?channel=&chat_id=` — the conversation's newest
+  event id; a gateway subscribes from here before dispatching a message.
 - `GET /api/v1/outbound/stream?channel=&chat_id=` — per-conversation SSE with
   `Last-Event-ID` replay from `bus_stream_events` (600 s TTL, 1000 events per
   conversation, `reset` for an expired cursor). Without `chat_id` the route still

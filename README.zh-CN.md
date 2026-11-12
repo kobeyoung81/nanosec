@@ -23,6 +23,7 @@ nanogateway ──HTTP + SSE──► nanobus ◄──HTTP + SSE── nanoagen
 其他模块的数据一律通过内部 HTTP 面（带共享令牌）读取。总线只负责消息。
 
 - **nanoprotocol** — 共享契约（Go 模块，非服务）：消息信封、类型常量、各服务使用的 HTTP/SSE 客户端
+- **nanoworkspace** — 智能体工作区：文件列表、预览、上传与 Git 面板。自己不存数据：验票、向门户确认归属，再经容器隧道转发。nginx 把 `/api/user/v1/files/` 与 `/api/user/v1/git/` 指到这里。
 - **nanobus** — 消息：按用户队列、事件流（SSE）、runner 的转发、nanoauth JWKS 的反向代理（hypervisor 隧道已归 provisioner，总线只留旧容器的回落）
 - **nanogateway** — 渠道适配器（企业微信 / 飞书 / 微信客服 / Web 聊天 / CLI）：身份解析、出入站路由、媒体、Web 渠道的 JWT 校验
 - **nanoagent** — 代理运行时（二进制名 `nanosec`，每用户一个）：多代理路由、ReAct 循环、LLM provider、工具、会话、技能、定时任务、子代理与 hypervisor
@@ -187,6 +188,7 @@ docker compose up -d
 | `nanoartifacts` | – | 作品库（经门户的 `/nanoartifacts/` 访问） |
 | `nanoasr` | – | 本地语音识别（由总线调用） |
 | `nanorunner` | – | 容器供给与 hypervisor 隧道（需要宿主机的 `docker.sock`） |
+| `nanoworkspace` | – | 文件浏览、预览与 Git 面板；把请求送到容器的隧道 |
 
 `admin-init` 先跑（应用自己的清单，再执行 `config`、`permissions`、`agent-types`、
 `prompts`、`skills`、`mcp` 六个 seed），随后 `bus-init` 应用自己的清单，最后各服务启动。

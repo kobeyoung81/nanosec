@@ -366,6 +366,11 @@ validation reads the key set directly (`NANO_PORTAL_JWKS_URL`, default
 `http://nanoauth:8081/auth/v1/.well-known/jwks`), so a bus outage does not lock
 anyone out.
 
+The workspace surface (`/api/user/v1/files/*`, `/api/user/v1/git/*`) is served by
+`nanoworkspace`: it verifies the token, asks the portal who owns the agent, and
+forwards through the container's tunnel (provisioner first, bus for containers
+not yet restarted).
+
 The console's `/api/admin/v1/*` is split at nginx by the module that owns each
 route: configuration, catalogues, prompts, permission keys, alert rules and audit
 go to `nanoadmin` (it verifies the JWT and the Management/Audit roles itself);

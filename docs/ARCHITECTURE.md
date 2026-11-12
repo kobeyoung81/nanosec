@@ -50,6 +50,7 @@ or restarted on its own. Three rules hold the split together:
 | `nanoprovisioner` | `nanoprovisioner` | Consumes the provisioning queue; creates, restarts and disposes agent containers through docker / swarm / k8s; applies per-tier quotas. | **yes** — `provisioner_*` |
 | `nanoauth` | `nanoauth` | Accounts, channel links, OAuth links, refresh tickets, git shortcuts, per-user secrets; login, RS256 tokens and JWKS; corporate-directory login. | **yes** — `auth_*` |
 | `nanoadmin` | `nanoadmin` | The platform catalogue and configuration: config items, agent types and overrides, prompts, models/providers, capabilities (built-in tools, skills, MCP), permission keys, alert rules, the audit log. | **yes** — `admin_*` |
+| `nanoworkspace` | `nanoworkspace` | The agent workspace surface: file listing, previews, uploads and the git panel. Stateless — it verifies the caller, asks the portal who owns the agent, and forwards through the container's tunnel. | no |
 | `nanoartifacts` | `nanoartifacts` | The work library: spaces, nodes, artifacts, GridFS bodies, the MCP endpoint agents publish through, and its own front end. | **yes** — `artifacts_*` |
 | `nanoasr` | `nanoasr` | Local speech-to-text sidecar, spoken to as an OpenAI-compatible model provider. | no (reads config from admin) |
 | `nanoui` | `nanoui-backend` | WeChat Mini Program BFF: login forward, account, subscriptions, preferences. | no (talks to nanoauth) |
@@ -80,7 +81,10 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Provisioner | Bus | HTTP RPC + REST | Register the runner, report a container's status, report the owner's status |
 | Provisioner | Docker / Swarm / K8s | API | Create, restart, dispose agent containers |
 | Provisioner | Admin | HTTP | Its own configuration (`runner` component) |
-| Portal | Bus | HTTP | Users, container reads, capability reads/writes it forwards, the file/git/terminal proxy |
+| Portal | Bus | HTTP | Users, container reads, capability reads/writes it forwards, the terminal proxy |
+| Browser (via nginx) | Workspace | HTTP | `/api/user/v1/files/*` and `/api/user/v1/git/*` (file panel, previews, git) |
+| Workspace | Portal | HTTP | Who owns this agent (`GET /internal/v1/agents/{id}`) |
+| Workspace | Provisioner / Bus | HTTP | Forwards the file/git request through the container's tunnel (provisioner first, bus while containers still dial it) |
 | Portal | Admin | HTTP | The console views it still serves need catalogue values (e.g. agent rows); reads ask for masked values |
 | Portal | `nanoauth` | HTTP | JWKS for token validation (direct; the bus proxy is legacy) |
 | Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes; the service verifies the JWT and the Management/Audit roles itself, and masks secrets on reads |
@@ -355,6 +359,7 @@ nginx (in the portal image) is the single origin for the browser:
 
 | Path | Upstream |
 |---|---|
+| `/api/user/v1/files/*`, `/api/user/v1/git/*` | `nanoworkspace` |
 | `/api/user/v1/*`, `/internal/*`, `/healthz` | portal Go |
 | `/api/admin/v1/users*`, `/containers/*`, `/overview`, `/components*`, `/conversations*`, `/runtime`, `/runners*` | portal Go (the console views whose data it holds) |
 | `/api/admin/v1/directory/*` | `nanoauth`, rewritten to `/auth/v1/directory/*` |

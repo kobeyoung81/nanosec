@@ -25,6 +25,7 @@ service writes only its own prefix; everything else is read over the internal HT
 surfaces with the shared token. The bus carries messages and owns nothing else.
 
 - **nanoprotocol** — shared contract (Go module, not a service): the message envelope, the type constants, and the HTTP/SSE client the services use
+- **nanoworkspace** — the agent workspace surface: file listing, previews, uploads and the git panel. It stores nothing; it verifies the caller, asks the portal who owns the agent, and forwards through the container's tunnel. nginx routes `/api/user/v1/files/` and `/api/user/v1/git/` here.
 - **nanobus** — messaging: per-user queues, the event stream (SSE), the runner plumbing, and the reverse proxy to `nanoauth`'s JWKS (hypervisor tunnels terminate at the provisioner; the bus keeps a fallback for containers that still dial it)
 - **nanogateway** — channel adapters (WeCom / Feishu / WeChat KF / web chat / CLI): identity resolution, inbound and outbound routing, media, JWKS validation for the web channel
 - **nanoagent** — the agent runtime (binary `nanosec`, one per user): multi-agent routing, the ReAct loop, LLM providers, tools, sessions, skills, cron, subagents and the hypervisor
@@ -194,6 +195,7 @@ This starts:
 | `nanoartifacts` | – | Work library (reached through the portal's `/nanoartifacts/`) |
 | `nanoasr` | – | Local speech-to-text (called by the bus) |
 | `nanorunner` | – | Container provisioning and hypervisor tunnels (needs the host's `docker.sock`) |
+| `nanoworkspace` | – | File browser, previews and the git panel; routes to the agent's tunnel |
 
 `admin-init` runs first (its manifests, then the `config`, `permissions`,
 `agent-types`, `prompts`, `skills` and `mcp` seeds), then `bus-init` (its own

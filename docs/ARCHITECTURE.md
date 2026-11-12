@@ -52,7 +52,6 @@ or restarted on its own. Three rules hold the split together:
 | `nanoadmin` | `nanoadmin` | The platform catalogue and configuration: config items, agent types and overrides, prompts, models/providers, capabilities (built-in tools, skills, MCP), permission keys, alert rules, the audit log. | **yes** — `admin_*` |
 | `nanoworkspace` | `nanoworkspace` | The agent workspace surface: file listing, previews, uploads and the git panel. Stateless — it verifies the caller, asks the portal who owns the agent, and forwards through the container's tunnel. | no |
 | `nanoartifacts` | `nanoartifacts` | The work library: spaces, nodes, artifacts, GridFS bodies, the MCP endpoint agents publish through, and its own front end. | **yes** — `artifacts_*` |
-| `nanoasr` | `nanoasr` | Local speech-to-text sidecar, spoken to as an OpenAI-compatible model provider. | no (reads config from admin) |
 | `nanoui` | `nanoui-backend` | WeChat Mini Program BFF: login forward, account, subscriptions, preferences. | no (talks to nanoauth) |
 
 The agent container is not part of the compose stack: the provisioner creates it, on
@@ -96,7 +95,6 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | `nanoauth` | Admin | HTTP | Its configuration (the JWT keypair, the `ldap.*` settings, the first-account switch) and the audit trail (`POST /api/v1/internal/audit`) |
 | `nanoadmin` | Bus | HTTP | Broadcast capability changes; ask the agent-data owner to clear a deleted type's references |
 | `nanoartifacts` | `nanoauth` | HTTP | JWKS (direct; the bus no longer proxies identity) |
-| `nanoasr` | Admin | HTTP | Voice hotwords (`voice.realtime.hotwords`) |
 
 Two transports deserve a note:
 
@@ -188,13 +186,12 @@ nanosec/                              # super-repo
 ├── nanoadmin/                        # platform catalogue + config (submodule) + migrations/
 ├── nanoportal/                       # console (submodule): server/ (Go) + web/ (React)
 ├── nanoartifacts/                    # work library (plain directory: Go + own web front end)
-├── nanoasr/                          # local speech-to-text sidecar (plain directory)
 └── nanoui/                           # WeChat Mini Program + Go BFF (submodule)
 ```
 
 `go.work` includes nine modules: `nanoportal`, `nanobus`, `nanogateway`,
 `nanoprotocol`, `nanoprovisioner`, `nanoagent`, `nanoauth`, `nanoartifacts`,
-`nanoadmin`. `nanoasr` and `nanoui` are built on their own (`GOWORK=off`).
+`nanoadmin`. `nanoui` is built on its own (`GOWORK=off`).
 
 ### 2.2 Dependency rules
 
@@ -557,15 +554,16 @@ dashboard, a small app) and for people to browse them.
 - Its own front end (a separate build) is loaded by the console either directly at
   `/nanoartifacts/` or as a module-federation remote panel.
 
-### 3.10 Local speech (`nanoasr`)
+### 3.10 Speech recognition (external)
 
-**Purpose**: make dictation work without a cloud ASR.
+**Purpose**: dictation without the platform running a recogniser.
 
-A small Go service around sherpa-onnx, exposing an OpenAI-compatible
-`/v1/audio/transcriptions` on `:6006`. It is registered in the model catalogue as an
-ordinary provider (base URL `http://nanoasr:6006/v1`), so the same voice path as a
-hosted provider works with it. It reads the hotword list from the admin module and
-rebuilds its recogniser when it changes.
+The recognition runtime is no longer part of the stack. The bus still owns the
+relay (the provider key never reaches the browser) and speaks the OpenAI realtime
+protocol to any configured provider; that provider is an external service now —
+LiteLLM's `/v1/realtime`, or anything with the same contract. There is no local
+engine and no `realtime.engine` switch: whichever provider the realtime tier points
+at is what serves it.
 
 ### 3.11 Mini Program (`nanoui`)
 
@@ -685,7 +683,7 @@ in `disposing`, and the next poll retries.
 Browser (WebAudio, 24 kHz PCM16) ──WS /ws/voice?session=…──► portal nginx ──► bus
 Bus: single-use session id (minted by the portal, 60 s, one use), then a transparent
      WebSocket relay to the configured ASR engine (hosted realtime endpoint, or the
-     local nanoasr through an OpenAI-compatible provider)
+     an OpenAI-compatible realtime provider)
 Result: live text into the composer, then an optional polish pass; nothing is sent
         automatically.
 ```
@@ -699,7 +697,7 @@ provider's credentials.
 console → portal Go → admin PUT /api/v1/config/{component}/{key}
 Admin: one row updated in admin_config
 Bus: "config changed" event on /api/v1/events/stream
-Consumers (gateway, agent, provisioner, auth, nanoasr): re-read their component
+Consumers (gateway, agent, provisioner, auth): re-read their component
 ```
 
 There is no restart step: the configuration is read at startup and re-read on the
@@ -758,7 +756,6 @@ point of use. The important ones:
 | `nanoportal` | `NANOPORTAL_MONGO_URI` (falls back to `NANOSEC_BUS_DATABASE_URI`), `NANO_PORTAL_BUS_URL`, `NANOSEC_ADMIN_URL`, `NANOSEC_BUS_INTERNAL_TOKEN`, `NANO_PORTAL_JWKS_URL` |
 | `nanoadmin` | `NANOSEC_ADMIN_{MONGO_URI,ADDR}`, `NANOSEC_BUS_INTERNAL_TOKEN`, `NANOSEC_BUS_URL` |
 | `nanoartifacts` | `NANOARTIFACTS_{MONGO_URI,SESSION_SECRET,COOKIE_PATH,QUOTA_BYTES,ADDR,WEB_DIR}`, `NANOAUTH_JWKS_URL` |
-| `nanoasr` | `NANOSEC_ADMIN_URL`, `NANOSEC_BUS_INTERNAL_TOKEN` |
 | `nanoui` | `NANOUI_BACKEND_{ADDR,MYSQL_DSN,NANOAUTH_URL}` |
 
 Two names are shared by the whole stack rather than following a prefix:
@@ -855,7 +852,6 @@ one host running the compose stack:
 | `nanoadmin` | 8080 | 14404 |
 | `nanoprovisioner` | 8080 | — |
 | `nanoartifacts` | 8080 | — (reached through the portal's nginx) |
-| `nanoasr` | 6006 | — |
 | agent hypervisor | 9090 | — (reached through the bus tunnel) |
 
 Startup order is enforced by the compose file: `admin-init` (admin manifests +

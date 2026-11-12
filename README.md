@@ -34,7 +34,6 @@ surfaces with the shared token. The bus carries messages and owns nothing else.
 - **nanoadmin** — the administrative domain: configuration, agent types and their overrides, prompts, models, capabilities, permission keys, alert rules, the audit trail
 - **nanoportal** — the console (Go + React): users, agents and groups, conversations, the work library's shell, and the browser chat
 - **nanoartifacts** — the work library: published HTML documents, versions, spaces, sharing and storage quotas
-- **nanoasr** — local speech-to-text for the composer's dictation (sherpa-onnx, dialed as an OpenAI-compatible provider)
 - **nanoui** — the WeChat Mini Program and its Go BFF
 
 ## Repository Layout
@@ -60,7 +59,6 @@ nanosec/                       # Super-repo (workspace, docs, configs, deploy)
 ├── nanoauth/                  # [submodule] Identity service
 ├── nanoportal/                # [submodule] Console (Go + React)
 ├── nanoartifacts/             # [submodule] Work library
-├── nanoasr/                   # [submodule] Local speech-to-text
 └── nanoui/                    # [submodule] WeChat Mini Program + BFF
 ```
 
@@ -83,7 +81,6 @@ This repository uses Git submodules to manage each service, and a Go workspace
 | `nanoauth` | `../nanoauth.git` | Identity service |
 | `nanoportal` | `../nanoportal.git` | Console |
 | `nanoartifacts` | `../nanoartifacts.git` | Work library |
-| `nanoasr` | `../nanoasr.git` | Speech-to-text |
 | `nanoui` | `../nanoui.git` | Mini Program + BFF |
 
 The remote URLs are relative, so they resolve against the super-repo's origin.
@@ -91,7 +88,7 @@ The remote URLs are relative, so they resolve against the super-repo's origin.
 ### Go Workspace
 
 `go.work` unifies nine modules for local development — no publishing needed to
-reference one from another (`nanoasr` and `nanoui` build on their own):
+reference one from another (`nanoui` builds on its own):
 
 ```
 go 1.26.2
@@ -193,7 +190,6 @@ This starts:
 | `nanoportal` | 14403 → 80 | The console (and, through its nginx, the gateway's web channel and the work library) |
 | `nanoadmin` | 14404 → 8080 | Configuration and the catalogues |
 | `nanoartifacts` | – | Work library (reached through the portal's `/nanoartifacts/`) |
-| `nanoasr` | – | Local speech-to-text (called by the bus) |
 | `nanorunner` | – | Container provisioning and hypervisor tunnels (needs the host's `docker.sock`) |
 | `nanoworkspace` | – | File browser, previews and the git panel; routes to the agent's tunnel |
 
@@ -329,7 +325,6 @@ live in `admin_config` and are edited in the console (or with
 | `nanoauth` | `NANOAUTH_` | `NANOAUTH_MONGO_URI`, `NANOAUTH_ADDR`, `NANOAUTH_JWT_KEY_ID`, `NANOAUTH_WECHAT_APP_ID` |
 | `nanoportal` | `NANO_PORTAL_` / `NANOPORTAL_` | `NANO_PORTAL_BUS_URL`, `NANOPORTAL_MONGO_URI`, `NANOSEC_ADMIN_URL` |
 | `nanoartifacts` | `NANOARTIFACTS_` | `NANOARTIFACTS_MONGO_URI`, `NANOARTIFACTS_SESSION_SECRET`, `NANOARTIFACTS_QUOTA_BYTES` |
-| `nanoasr` | `NANOSEC_` | `NANOSEC_ADMIN_URL`, `NANOSEC_BUS_INTERNAL_TOKEN` |
 | `nanoui` (backend) | `NANOUI_BACKEND_` | `NANOUI_BACKEND_ADDR` |
 
 > `NANOSEC_BUS_INTERNAL_TOKEN` is the platform-wide shared secret: every internal

@@ -32,7 +32,6 @@ nanogateway ──HTTP + SSE──► nanobus ◄──HTTP + SSE── nanoagen
 - **nanoadmin** — 管理域：配置、代理类型与其覆盖、提示词、模型、能力、权限键、告警规则、审计
 - **nanoportal** — 控制台（Go + React）：用户、代理与分组、会话、作品库的外壳、浏览器聊天
 - **nanoartifacts** — 作品库：发布的自包含 HTML、版本、空间、分享与配额
-- **nanoasr** — 输入框听写的本地语音识别（sherpa-onnx，按 OpenAI 兼容 provider 接入）
 - **nanoui** — 微信小程序与其 Go BFF
 
 ## 仓库结构
@@ -58,7 +57,6 @@ nanosec/                       # 超级仓库（工作区、文档、配置、�
 ├── nanoauth/                  # [子模块] 身份服务
 ├── nanoportal/                # [子模块] 控制台（Go + React）
 ├── nanoartifacts/             # [子模块] 作品库
-├── nanoasr/                   # [子模块] 本地语音识别
 └── nanoui/                    # [子模块] 微信小程序 + BFF
 ```
 
@@ -79,14 +77,13 @@ nanosec/                       # 超级仓库（工作区、文档、配置、�
 | `nanoauth` | `../nanoauth.git` | 身份服务 |
 | `nanoportal` | `../nanoportal.git` | 控制台 |
 | `nanoartifacts` | `../nanoartifacts.git` | 作品库 |
-| `nanoasr` | `../nanoasr.git` | 语音识别 |
 | `nanoui` | `../nanoui.git` | 小程序 + BFF |
 
 远程地址是相对路径，按超级仓库的 origin 解析。
 
 ### Go 工作区
 
-`go.work` 将九个模块联合构建，无需发布即可在本地相互引用（`nanoasr` 与 `nanoui`
+`go.work` 将九个模块联合构建，无需发布即可在本地相互引用（`nanoui`
 各自独立构建）：
 
 ```
@@ -186,7 +183,6 @@ docker compose up -d
 | `nanoportal` | 14403 → 80 | 控制台（并通过它的 nginx 代理网关的 Web 通道与作品库） |
 | `nanoadmin` | 14404 → 8080 | 配置与各类目录 |
 | `nanoartifacts` | – | 作品库（经门户的 `/nanoartifacts/` 访问） |
-| `nanoasr` | – | 本地语音识别（由总线调用） |
 | `nanorunner` | – | 容器供给与 hypervisor 隧道（需要宿主机的 `docker.sock`） |
 | `nanoworkspace` | – | 文件浏览、预览与 Git 面板；把请求送到容器的隧道 |
 
@@ -320,7 +316,6 @@ NANOSEC_PROVISIONER_MONGO_URI="$NANOSEC_BUS_DATABASE_URI" \
 | `nanoauth` | `NANOAUTH_` | `NANOAUTH_MONGO_URI`、`NANOAUTH_ADDR`、`NANOAUTH_JWT_KEY_ID`、`NANOAUTH_WECHAT_APP_ID` |
 | `nanoportal` | `NANO_PORTAL_` / `NANOPORTAL_` | `NANO_PORTAL_BUS_URL`、`NANOPORTAL_MONGO_URI`、`NANOSEC_ADMIN_URL` |
 | `nanoartifacts` | `NANOARTIFACTS_` | `NANOARTIFACTS_MONGO_URI`、`NANOARTIFACTS_SESSION_SECRET`、`NANOARTIFACTS_QUOTA_BYTES` |
-| `nanoasr` | `NANOSEC_` | `NANOSEC_ADMIN_URL`、`NANOSEC_BUS_INTERNAL_TOKEN` |
 | `nanoui`（后端） | `NANOUI_BACKEND_` | `NANOUI_BACKEND_ADDR` |
 
 > `NANOSEC_BUS_INTERNAL_TOKEN` 是全平台共享密钥：所有内部面（`/internal/v1/*`）只接受

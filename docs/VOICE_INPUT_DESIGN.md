@@ -85,11 +85,10 @@ bus 对内网**不做任何鉴权**（它信任 portal 注入的 `user_id`），
 | 键 | 默认 | 说明 |
 |---|---|---|
 | `enabled` | `false` | 总开关。没配好之前保持 false，前端不显示麦克风 |
-| `realtime.engine` | `local` | `local`＝平台自带模型（本机 `nanoasr`）；`remote`＝外部实时服务。**只影响标签与预期**：实际由 provider 决定 |
 | `realtime.providerId` | 空 | 模型目录里**平台 scope** 的 provider id。user scope 会被拒 |
 | `realtime.model` | 空 | 该 provider 的模型别名（`?model=`） |
 | `realtime.language` | `zh` | 留空 = 让模型自动检测 |
-| `realtime.prompt` | 空 | 关键词/术语提示（透传给远端会话；**本机引擎不读**，热词走部署端文件） |
+| `realtime.prompt` | 空 | 关键词/术语提示（透传给远端会话） |
 | `realtime.maxSeconds` | `120` | 单次录音上限（服务端与前端双重生效），夹到 10..600 |
 | `realtime.commitIntervalMs` | `0` | 0 = 只在用户结束时 commit；夹到 0..2000 |
 
@@ -115,19 +114,17 @@ bus 对内网**不做任何鉴权**（它信任 portal 注入的 `user_id`），
 
 **可用性规则**：麦克风只在**实时层配好**（`enabled` + `realtime.providerId/model`）时才出现——录音是由实时会话驱动的，只有兜底层时前端连音频都采不起来。实时层**配了但跑挂**（本机服务没起、握手失败、结束超时）属于运行时故障，而本次已经录到的音频会交给兜底层，这正是第二层存在的意义。
 
-**provider 的边界**：识别服务必须是 **OpenAI 兼容端点**（`base_url` 以 `/v1` 结尾）——平台的 LiteLLM、本机 `nanoasr`，或任何同形状的自建服务。形状不同的厂商（Deepgram / Azure Speech 等）不在配置里解决，而是写一个像 `nanoasr` 那样的适配服务（它把这一份契约翻译成 sherpa-onnx，换引擎只换适配器，平台零改动）。`model_providers.kind` 目前只是标签，**没有任何代码按它分支**。
+**provider 的边界**：识别服务必须是 **OpenAI 兼容端点**（`base_url` 以 `/v1` 结尾）——平台的 LiteLLM，或任何同形状的外部服务。形状不同的厂商（Deepgram / Azure Speech 等）不在配置里解决，而是需要一层把该厂商契约翻译成 OpenAI 形状的适配服务；平台本身不再运行识别运行时。`model_providers.kind` 目前只是标签，**没有任何代码按它分支**。
 
-**本机引擎（`nanoasr`）**：`realtime.engine=local` 时，语音页会自动把 `realtime.providerId` 指向模型目录里那条内置服务（`base_url=http://nanoasr:6006/v1`，key 留空），`realtime.model` 填 `/v1/models` 列出的别名（`bilingual-zh-en-2023-02-20`）。
-
-**热词（本机引擎的"上下文"）**：`realtime.hotwords`，一行一个词（`#` 注释、最多 200 条），在语音页里编辑。sherpa 是在**建识别器时**取热词的，所以服务每 ~30 秒读一次平台配置，**变了就重建识别器**——但只在没有会话在跑的时候重建，正在说话时到达的改动会在那条会话结束后生效。非空的热词表会把该模型从 `greedy_search` 切到 `modified_beam_search`（更吃 CPU，偏置也才有效）。也正因为它按识别器生效，`realtime.prompt` 对本机引擎无效。
+**识别运行时已移出平台**：平台只保留服务端中继（provider key 不下发浏览器）与实时协议客户端；没有本地引擎、没有 `realtime.engine` 开关、没有热词配置——这些随 `nanoasr` 一起移除了。`realtime.providerId` 与 `realtime.model` 指向哪个外部服务，就由哪个服务识别。
 
 
 
 ## 6. 配置步骤（部署后一次）
 
-1. **确认 provider**：`base_url` 必须以 `/v1` 结尾。用本机引擎时新建一条 `base_url=http://nanoasr:6006/v1`（key 留空，`scope=platform`）；用外部服务时复用/新建 LiteLLM 那条。
-2. **在 `/admin/voice` 里配三层**：实时层选引擎与 provider（本机引擎的别名叫 `bilingual-zh-en-2023-02-20`，点「检测识别服务」会列出可用别名）；兜底层按需打开并选外部 provider 与模型；润色按现状。
-3. 语言填 `zh`（或留空自动）；提示词按需改。本机引擎不读 `realtime.prompt`（热词走 `configs/nanoasr`）。
+1. **确认 provider**：`base_url` 必须以 `/v1` 结尾。实时层用外部实时服务（LiteLLM 的 realtime 池，别名如 `qwen-realtime`），兜底层用文件转写模型；两者都可以指向同一条平台 scope 的 provider。
+2. **在 `/admin/voice` 里配三层**：实时层选 provider 与模型（点「检测识别服务」会列出可用别名）；兜底层按需打开并选模型；润色按现状。
+3. 语言填 `zh`（或留空自动）；提示词按需改。
 4. **先做一次 V0 探针**（下面两条，决定 `commitIntervalMs` 与模型选择），确认后 `enabled=true`。
 5. `/admin/voice` 里的两个测试按钮分别验证两层：走**一次性文件转写**（上传一段音频）打 `/v1/audio/transcriptions`，`target=batch` 的那个打兜底层。**实时**转写请在对话里点一次麦克风试。
 

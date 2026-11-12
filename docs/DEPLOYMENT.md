@@ -65,7 +65,7 @@ git submodule update --init --recursive
 
 The submodules are the services: `nanobus`, `nanoadmin`, `nanoauth`, `nanoportal`,
 `nanogateway`, `nanoagent` (the per-user agent runtime), `nanoprovisioner`,
-`nanoprotocol` (the shared contract library), `nanoasr` (speech-to-text),
+`nanoprotocol` (the shared contract library),
 `nanoartifacts` (the work library) and `nanoui` (the Mini Program backend).
 
 Install the pre-commit hooks (optional but recommended — they check that every
@@ -120,7 +120,7 @@ docker compose up -d
 `agent-types seed`, `prompts seed`, `skills seed`, `mcp seed` — because `bus-init`
 and the running services read configuration from it. `bus-init` applies the bus's own
 manifests. Then `nanobus`, `nanoadmin`, `nanoauth`, `nanogateway`, `nanoportal`,
-`nanorunner`, `nanoartifacts` and `nanoasr` start. `nanoauth` generates its JWT
+`nanorunner` and `nanoartifacts` start. `nanoauth` generates its JWT
 keypair on first boot and writes it through `nanoadmin`.
 
 Verify:

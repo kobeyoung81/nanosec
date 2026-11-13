@@ -431,6 +431,8 @@ Two plugins exist today:
   `/artifacts` page; the shell's framed page remains as the rollback path.
 - `auth` (`/plugins/auth/`, served by `nanoauth` itself) contributes the account list
   at `/admin/users`; the shell's own page remains as the fallback.
+- `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the runtime snapshot
+  at `/admin/runtime`, same fallback rule.
 
 A page cannot import the shell's source, so its context carries the shell's
 component kit (`ctx.ui`), the strings (`ctx.t`) and a token-carrying data client

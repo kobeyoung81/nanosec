@@ -138,7 +138,7 @@ One MongoDB database (`NANOSEC_BUS_DATABASE_URI`), one prefix per writer:
 | `admin_` | admin | `admin_config`, `admin_agent_types`, `admin_agent_type_overrides`, `admin_models`, `admin_model_providers`, `admin_prompts`, `admin_permission_keys`, `admin_builtin_tools`, `admin_skills`, `admin_mcp_servers`, `admin_alert_rules`, `admin_audit_log` |
 | `provisioner_` | provisioner | `provisioner_container_requests`, `provisioner_runners` |
 | `auth_` | nanoauth | `auth_users`, `auth_oauth_providers`, `auth_refresh_tokens`, `auth_git_shortcuts`, `auth_secrets` |
-| `bus_` | bus | `bus_inbound_queue`, `bus_outbound_queue`, `bus_wechatkf_sync_state` |
+| `bus_` | bus | `bus_inbound_queue`, `bus_outbound_queue`, `bus_wechatkf_sync_state`, `bus_stream_events`, `bus_platform_events`, `bus_voice_sessions` |
 | `artifacts`, `artifacts_` | nanoartifacts | `artifacts`, `artifacts_versions`, `artifacts_spaces`, `artifacts_nodes`, `artifacts_uploads`, `artifacts_fs.files` / `artifacts_fs.chunks` |
 | `sys_` | infrastructure, written by the module that owns the record | `sys_migrations` (one row per module manifest), `sys_counters` (sequences), `sys_flags` (one-shot flags) |
 
@@ -275,8 +275,11 @@ Surface:
   conversation, `reset` for an expired cursor). Without `chat_id` the route still
   serves the legacy per-channel ring. Chunks and completions live here; only a
   non-streaming outbound message is also written to the queue.
-- `GET /api/v1/events/stream` — change notifications (config changes, agent changes,
-  capability changes) that the agent and the portal subscribe to.
+- `GET /api/v1/events/stream` — change notifications (config, models, agent
+  records, capabilities). They are written to `bus_platform_events` (600 s TTL,
+  newest 10,000 kept) and read back with `Last-Event-ID`, so a subscriber on any
+  replica sees every change; a fresh subscriber starts at the current end rather
+  than replaying the retained window.
 - `GET /ws/hypervisor` — the hypervisor tunnel, kept only for containers whose
   image still dials the bus. Tunnels terminate at the provisioner now
   (`GET /ws/hypervisor` there, registry in `provisioner_tunnels`); when the bus

@@ -26,3 +26,28 @@ spec:
                 secretKeyRef:
                   name: nanosec-secrets
                   key: internal-token
+            - name: NANOSEC_ADMIN_URL
+              value: "http://nanoadmin:8080"
+            - name: NANOSEC_BUS_DATABASE_URI
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: mongo-uri
+            # How another replica reaches this runner's tunnel forwarding. With
+            # one runner the Service name is enough.
+            - name: NANOSEC_RUNNER_ADVERTISE_URL
+              value: "http://nanorunner:8080"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20

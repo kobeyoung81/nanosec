@@ -128,6 +128,9 @@ services:
       # Hypervisor tunnels terminate here now. Containers are told where to dial
       # through runner.tunnelUrl; this value is what they get.
       NANOSEC_RUNNER_TUNNEL_URL: ws://nanorunner:8080
+      # How another replica reaches this runner's tunnel forwarding. Give each
+      # runner a distinct address when there is more than one.
+      NANOSEC_RUNNER_ADVERTISE_URL: http://nanorunner:8080
       # The terminal bridge re-checks agent ownership against the module that
       # owns the rows.
       NANOSEC_PORTAL_URL: http://nanoportal:80

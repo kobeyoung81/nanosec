@@ -332,7 +332,19 @@ kubectl apply -f deploy/k8s/02-nanobus.yaml     # its init Job (manifests), then
 kubectl apply -f deploy/k8s/03-nanoauth.yaml
 kubectl apply -f deploy/k8s/04-services.yaml    # nanoportal + nanogateway
 kubectl apply -f deploy/k8s/05-nanorunner.yaml
+kubectl apply -f deploy/k8s/06-nanoadmin.yaml   # configuration + catalogues + audit
+kubectl apply -f deploy/k8s/07-nanoworkspace.yaml  # file/git panels
 ```
+
+Every Deployment carries `/healthz` readiness and liveness probes. The stateless
+modules (bus, auth, portal, gateway, admin, workspace) run two replicas; the runner
+stays at one because it owns the node's container runtime. Two things to configure
+for more than one runner: give each a distinct `NANOSEC_RUNNER_ADVERTISE_URL` (the
+address another replica reaches it at) so tunnel requests can be relayed to the
+runner holding the connection, and set
+`runner.storage.accessMode=ReadWriteMany` only when the storage class really
+supports it (`NANOSEC_RUNNER_STORAGE_ACCESS_MODE`); the default is
+`ReadWriteOnce`.
 
 `05-nanorunner.yaml` uses the provisioner's ServiceAccount; the RBAC manifest lives
 beside the provisioner's own deploy files:
@@ -341,11 +353,10 @@ beside the provisioner's own deploy files:
 kubectl apply -f nanoprovisioner/deploy/k8s/rbac.yaml
 ```
 
-The k8s manifests predate the admin module's split: they still describe the bus,
-auth, gateway, portal and runner, so a cluster deployment needs a `nanoadmin`
-Deployment (and its one-shot init Job) added from `deploy/k8s/` before the console's
-catalogue pages work. That gap is tracked in the plan; the compose and swarm targets
-already carry it.
+`nanoadmin` and `nanoworkspace` now have manifests of their own. One gap remains:
+the cluster needs the admin **init Job** (`nanoadmin migrate up` and the seeds) run
+once before the console's catalogues are populated — compose and swarm do this with
+`admin-init`; the k8s manifests do not carry that Job yet.
 
 4. Verify and expose the portal:
 

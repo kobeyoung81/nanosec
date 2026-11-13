@@ -1,0 +1,61 @@
+# nanoworkspace: the file and git panels. It stores nothing — the bytes live in
+# the agent container's volume — so it scales horizontally like any stateless
+# module.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanoworkspace
+  namespace: nanosec
+spec:
+  selector:
+    app: nanoworkspace
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanoworkspace
+  namespace: nanosec
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nanoworkspace
+  template:
+    metadata:
+      labels:
+        app: nanoworkspace
+    spec:
+      containers:
+        - name: nanoworkspace
+          image: kobeyoung81/nanoworkspace:latest
+          env:
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token
+            - name: NANOAUTH_JWKS_URL
+              value: "http://nanoauth:8081/auth/v1/.well-known/jwks"
+            - name: NANOSEC_PORTAL_URL
+              value: "http://nanoportal:80"
+            - name: NANOSEC_PROVISIONER_URL
+              value: "http://nanorunner:8080"
+            - name: NANOSEC_BUS_URL
+              value: "http://nanobus:9000"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20

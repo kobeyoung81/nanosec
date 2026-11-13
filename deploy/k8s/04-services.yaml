@@ -17,7 +17,7 @@ metadata:
   name: nanoportal
   namespace: nanosec
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: nanoportal
@@ -41,6 +41,18 @@ spec:
                   key: internal-token
           ports:
             - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 20
 ---
 # nanogateway chat platform adapters (configure channels in bus config first).
 apiVersion: apps/v1
@@ -49,7 +61,7 @@ metadata:
   name: nanogateway
   namespace: nanosec
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: nanogateway
@@ -68,3 +80,23 @@ spec:
                 secretKeyRef:
                   name: nanosec-secrets
                   key: internal-token
+            - name: NANOSEC_ADMIN_URL
+              value: "http://nanoadmin:8080"
+            - name: NANOSEC_PORTAL_URL
+              value: "http://nanoportal:80"
+            - name: NANOSEC_PROVISIONER_URL
+              value: "http://nanorunner:8080"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20

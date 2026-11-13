@@ -84,6 +84,7 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Browser (via nginx) | Workspace | HTTP | `/api/user/v1/files/*` and `/api/user/v1/git/*` (file panel, previews, git) |
 | Workspace | Portal | HTTP | Who owns this agent (`GET /internal/v1/agents/{id}`) |
 | Workspace | Provisioner / Bus | HTTP | Forwards the file/git request through the container's tunnel (provisioner first, bus while containers still dial it) |
+| Provisioner (replica A) | Provisioner (replica B) | HTTP | Relays a tunnel request to the replica holding the connection (`provisioner_tunnels.runner_url`) |
 | Portal | Admin | HTTP | The console views it still serves need catalogue values (e.g. agent rows); reads ask for masked values |
 | Portal | `nanoauth` | HTTP | JWKS for token validation (direct; the bus proxy is legacy) |
 | Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes; the service verifies the JWT and the Management/Audit roles itself, and masks secrets on reads |

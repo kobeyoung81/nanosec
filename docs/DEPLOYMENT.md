@@ -370,24 +370,27 @@ kubectl -n nanosec port-forward svc/nanoportal 8080:80
 `nanoadmin` and `nanoartifacts` verify browser tokens themselves against
 nanoauth's key set. Both read `NANOAUTH_JWKS_URL`, defaulting to
 `http://nanoauth:8081/auth/v1/.well-known/jwks` — direct, not through the bus.
-The portal's nginx also exposes `/api/auth/v1/*` straight to `nanoauth`
-(rewritten to `/auth/v1/*`), and the front end uses it for login, registration,
-refresh and logout: the portal is not in the identity path at all. Its own token
+The portal's nginx also exposes `/api/v1/auth/*` straight to `nanoauth`
+(rewritten to `/auth/v1/*`; the older `/api/auth/v1/*` is the same block, kept so
+tabs opened before a deploy keep working), and the front end uses it for login,
+registration, refresh and logout: the portal is not in the identity path at all. Its own token
 validation reads the key set directly (`NANO_PORTAL_JWKS_URL`, default
 `http://nanoauth:8081/auth/v1/.well-known/jwks`), so a bus outage does not lock
 anyone out.
 
-The workspace surface (`/api/user/v1/files/*`, `/api/user/v1/git/*`) is served by
-`nanoworkspace`: it verifies the token, asks the portal who owns the agent, and
-forwards through the container's tunnel (provisioner first, bus for containers
-not yet restarted).
+Every module answers under `/api/v1/<module>/…`, so a path names its owner. The
+workspace surface (`/api/v1/workspace/files/*`, `/api/v1/workspace/git/*`; the
+older `/api/user/v1/…` still answers) is served by `nanoworkspace`: it verifies
+the token, asks the portal who owns the agent, and forwards through the
+container's tunnel (provisioner first, bus for containers not yet restarted).
 
-The console's `/api/admin/v1/*` is split at nginx by the module that owns each
-route: configuration, catalogues, prompts, permission keys, alert rules and audit
-go to `nanoadmin` (it verifies the JWT and the Management/Audit roles itself);
-users, containers, the overview, component summaries, conversations, runtime and
-runners stay in the portal; directory diagnostics go to `nanoauth`
-(`/auth/v1/directory/*`). No module proxies another module's console routes.
+The console's `/api/v1/admin/*` (and its older `/api/admin/v1/*`) is split at
+nginx by the module that owns each route: configuration, catalogues, prompts,
+permission keys, alert rules and audit go to `nanoadmin` (it verifies the JWT and
+the Management/Audit roles itself); users, containers, the overview, component
+summaries, conversations, runtime and runners stay in the portal; directory
+diagnostics go to `nanoauth` (`/auth/v1/directory/*`). No module proxies another
+module's console routes.
 
 ### Metrics
 

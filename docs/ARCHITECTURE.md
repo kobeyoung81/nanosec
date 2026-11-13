@@ -63,7 +63,7 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | From | To | Transport | Purpose |
 |---|---|---|---|
 | Browser | portal's nginx | HTTPS | Everything, one origin (see §3.4 for the path map) |
-| Browser | `nanoauth` | HTTP | Login, registration, refresh and logout under `/api/auth/v1/*` (nginx rewrites to `/auth/v1/*`) |
+| Browser | `nanoauth` | HTTP | Login, registration, refresh and logout under `/api/v1/auth/*` (nginx rewrites to `/auth/v1/*`; `/api/auth/v1/*` still works) |
 | portal nginx | `nanoportal` Go | HTTP | Console API (`/api/admin/v1/*`, `/api/user/v1/*`), `/internal/*`, `/healthz` |
 | portal nginx | `nanogateway` | HTTP + WS | Web chat (`/ws/agent/*`) and its REST (`/api/v1/*`) |
 | portal nginx | `nanobus` | WS | Dictation socket (`/ws/voice`) |
@@ -81,13 +81,13 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Provisioner | Docker / Swarm / K8s | API | Create, restart, dispose agent containers |
 | Provisioner | Admin | HTTP | Its own configuration (`runner` component) |
 | Portal | Bus | HTTP | Users, container reads, capability reads/writes it forwards, the terminal proxy |
-| Browser (via nginx) | Workspace | HTTP | `/api/user/v1/files/*` and `/api/user/v1/git/*` (file panel, previews, git) |
+| Browser (via nginx) | Workspace | HTTP | `/api/v1/workspace/files/*` and `/api/v1/workspace/git/*` (file panel, previews, git; the older `/api/user/v1/…` paths still answer) |
 | Workspace | Portal | HTTP | Who owns this agent (`GET /internal/v1/agents/{id}`) |
 | Workspace | Provisioner / Bus | HTTP | Forwards the file/git request through the container's tunnel (provisioner first, bus while containers still dial it) |
 | Provisioner (replica A) | Provisioner (replica B) | HTTP | Relays a tunnel request to the replica holding the connection (`provisioner_tunnels.runner_url`) |
 | Portal | Admin | HTTP | The console views it still serves need catalogue values (e.g. agent rows); reads ask for masked values |
 | Portal | `nanoauth` | HTTP | JWKS for token validation (direct; the bus proxy is legacy) |
-| Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes; the service verifies the JWT and the Management/Audit roles itself, and masks secrets on reads |
+| Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes under `/api/v1/admin/*` (the older `/api/admin/v1/*` answers too); the service verifies the JWT and the Management/Audit roles itself, and masks secrets on reads |
 | Portal | Mongo | driver | Its own collections |
 | Bus | Admin | HTTP | Config writes, audit reports, catalogue writes it receives from older clients |
 | Bus | Portal | HTTP | Agent-status write and a deleted type's reference cleanup |
@@ -377,14 +377,21 @@ The Go server does four things:
 
 nginx (in the portal image) is the single origin for the browser:
 
+Every module answers under `/api/v1/<module>/…`, so the owner of a path is
+readable from the path itself. The older prefixes stay as aliases until no
+caller uses them; the front end already uses the target-state ones.
+
 | Path | Upstream |
 |---|---|
-| `/api/user/v1/files/*`, `/api/user/v1/git/*` | `nanoworkspace` |
+| `/api/v1/workspace/files/*`, `/api/v1/workspace/git/*` | `nanoworkspace` |
+| `/api/v1/admin/*` | `nanoadmin` (configuration, catalogues, prompts, permission keys, alert rules, audit; it verifies the JWT itself) |
+| `/api/v1/auth/*` | `nanoauth`, rewritten to `/auth/v1/*` |
+| `/api/user/v1/files/*`, `/api/user/v1/git/*` | `nanoworkspace` (alias) |
 | `/api/user/v1/*`, `/internal/*`, `/healthz` | portal Go |
 | `/api/admin/v1/users*`, `/containers/*`, `/overview`, `/components*`, `/conversations*`, `/runtime`, `/runners*` | portal Go (the console views whose data it holds) |
-| `/api/admin/v1/directory/*` | `nanoauth`, rewritten to `/auth/v1/directory/*` |
-| `/api/admin/v1/*` (everything else: configs, catalogues, prompts, permission keys, alert rules, audit) | `nanoadmin` |
-| `/api/auth/v1/*` | `nanoauth`, rewritten to `/auth/v1/*` |
+| `/api/admin/v1/directory/*` | `nanoauth`, rewritten to `/auth/v1/directory/*` (alias) |
+| `/api/admin/v1/*` (everything else) | `nanoadmin` (alias of `/api/v1/admin/*`) |
+| `/api/auth/v1/*` | `nanoauth`, rewritten to `/auth/v1/*` (alias) |
 | `/api/v1/*` | gateway (the web channel's REST) |
 | `/ws/agent/*` | gateway (chat and terminal sockets) |
 | `/ws/voice` | bus (dictation) |

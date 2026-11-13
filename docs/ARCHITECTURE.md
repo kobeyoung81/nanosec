@@ -436,6 +436,10 @@ Two plugins exist today:
   page reads the parameters from `ctx.params`.
 - `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the runtime snapshot
   at `/admin/runtime`, same fallback rule.
+- `workspace` (`/plugins/workspace/`, served by `nanoworkspace`) contributes the files
+  page at `/files`; the browser it embeds is still the shell's component (handed over
+  as `ctx.ui.FilePanel`), so the next step — moving the browser into this module —
+  changes one reference and nothing else.
 
 A page cannot import the shell's source, so its context carries the shell's
 component kit (`ctx.ui`), the strings (`ctx.t`), a token-carrying data client

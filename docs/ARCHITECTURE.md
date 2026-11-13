@@ -111,10 +111,14 @@ Two transports deserve a note:
   sharded), indexed `{channel:1, chat_id:1, _id:1}` with a 600-second TTL on `at`
   and a per-conversation trim to the newest 1000 events. A subscriber asks
   `GET /api/v1/outbound/stream?channel=&chat_id=` and reconnects with
-  `Last-Event-ID` (the event's ObjectId hex); replay and live delivery are the same
-  query, so any replica can serve it. A cursor older than the retained window — or
-  one this process cannot parse — gets an explicit `reset` event instead of a
-  silent gap.
+  `Last-Event-ID` (the event's ObjectId hex). Replay is one read of the log; live
+  delivery comes from the replica's **tailer** (one change stream plus a 2-second
+  safety scan per replica), which fans what it sees out to that replica's
+  subscribers. Database reads therefore scale with replicas, not with open
+  streams: fifty connected conversations cost the same query rate as two. A
+  subscriber that falls behind is told (`lag`) and catches up from the log rather
+  than being fed a hole. A cursor older than the retained window — or one this
+  process cannot parse — gets an explicit `reset` event instead of a silent gap.
 - **Conversation subscriptions.** The gateway opens one SSE per
   `(channel, chat_id)` when it dispatches an inbound message. It reads
   `GET /api/v1/outbound/cursor` *before* posting the message, so the subscription
@@ -128,10 +132,13 @@ Two transports deserve a note:
   turn) and skips conversations that have one, so nothing is delivered twice.
 - **`poll_outbound`** remains in the protocol and the bus for older clients; the
   gateway no longer calls it.
-- **Writes are coalesced.** Chunks of the same message and kind are merged inside
-  a 200 ms window into one document (content concatenated in order, `seq` keeps
-  the last value); a `complete` flushes the conversation's pending chunk first, so
-  a stored answer never follows its own completion. A 5,000-event burst becomes
+- **Writes are coalesced and batched.** Chunks of the same message and kind are
+  merged inside a 200 ms window into one document (content concatenated in order,
+  `seq` keeps the last value); merged rows from every conversation are then
+  written in one `insertMany` per 20 ms window. A `complete` flushes the
+  conversation's pending chunk first and waits for both writes before answering,
+  so a stored answer never follows its own completion and the gateway never closes
+  a subscription on an event the log has not got. A 5,000-event burst becomes
   about 140 documents.
 - **Metrics**: `GET /metrics` on the bus (internal network, anonymous — it is not
   under `/api/v1`, so the internal-token guard excludes it by name) exposes
@@ -282,14 +289,14 @@ Surface:
   event id; a gateway subscribes from here before dispatching a message.
 - `GET /api/v1/outbound/stream?channel=&chat_id=` — per-conversation SSE with
   `Last-Event-ID` replay from `bus_stream_events` (600 s TTL, 1000 events per
-  conversation, `reset` for an expired cursor). Without `chat_id` the route still
-  serves the legacy per-channel ring. Chunks and completions live here; only a
+  conversation, `reset` for an expired cursor), then the replica's tailer. Without
+  `chat_id` the route still serves the legacy per-channel ring. Chunks and completions live here; only a
   non-streaming outbound message is also written to the queue.
 - `GET /api/v1/events/stream` — change notifications (config, models, agent
-  records, capabilities). They are written to `bus_platform_events` (600 s TTL,
-  newest 10,000 kept) and read back with `Last-Event-ID`, so a subscriber on any
-  replica sees every change; a fresh subscriber starts at the current end rather
-  than replaying the retained window.
+  records, capabilities). They are written to `bus_platform_events` (24-hour TTL,
+  newest 10,000 kept) and read back with `Last-Event-ID`, then followed live from
+  the replica's tailer, so a subscriber on any replica sees every change; a fresh
+  subscriber starts at the current end rather than replaying the retained window.
 - `GET /ws/hypervisor` — the hypervisor tunnel, kept only for containers whose
   image still dials the bus. Tunnels terminate at the provisioner now
   (`GET /ws/hypervisor` there, registry in `provisioner_tunnels`); when the bus

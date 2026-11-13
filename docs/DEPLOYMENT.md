@@ -371,9 +371,12 @@ kubectl -n nanosec port-forward svc/nanoportal 8080:80
 nanoauth's key set. Both read `NANOAUTH_JWKS_URL`, defaulting to
 `http://nanoauth:8081/auth/v1/.well-known/jwks` — direct, not through the bus.
 Module front ends live under one namespace, `/plugins/<id>/`, served by the
-service that builds them (`/plugins/artifacts/` → `nanoartifacts`). The portal's
-shell loads them at runtime from each plugin's manifest, so rebuilding one
-module's image updates its front end without rebuilding the shell.
+service that builds them (`/plugins/artifacts/` → `nanoartifacts`,
+`/plugins/auth/` → `nanoauth`). The portal's shell loads them at runtime from each
+plugin's manifest, so rebuilding one module's image updates its front end without
+rebuilding the shell. `nanoauth` serves its bundle from `NANOAUTH_UI_DIR` (default
+`/app/ui`, baked into the image); an image without it simply contributes no page,
+and the console shows the shell's own.
 
 The portal's nginx also exposes `/api/v1/auth/*` straight to `nanoauth`
 (rewritten to `/auth/v1/*`; the older `/api/auth/v1/*` is the same block, kept so

@@ -423,9 +423,20 @@ Federation at runtime. A plugin contributes two things, both from the same manif
 
 Every plugin is served from one namespace, `/plugins/<id>/` (`nginx` maps each id to
 the service that builds it), which is what lets one module's image update its front
-end without touching the shell. `nanoartifacts` is the first plugin: its build is at
-`/plugins/artifacts/`, it contributes the two library panels and the `/artifacts`
-page, and the shell's own framed page remains as the rollback path.
+end without touching the shell.
+
+Two plugins exist today:
+
+- `nanoartifacts` (`/plugins/artifacts/`) contributes the two library panels and the
+  `/artifacts` page; the shell's framed page remains as the rollback path.
+- `auth` (`/plugins/auth/`, served by `nanoauth` itself) contributes the account list
+  at `/admin/users`; the shell's own page remains as the fallback.
+
+A page cannot import the shell's source, so its context carries the shell's
+component kit (`ctx.ui`), the strings (`ctx.t`) and a token-carrying data client
+(`ctx.api`). That keeps one implementation of every control and one compiled
+stylesheet while the page lives in its own application; the contract lists the props
+a page may rely on.
 
 ### 3.5 Agent service (`nanoagent`, binary `nanosec`)
 

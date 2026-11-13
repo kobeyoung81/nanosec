@@ -378,6 +378,13 @@ users, containers, the overview, component summaries, conversations, runtime and
 runners stay in the portal; directory diagnostics go to `nanoauth`
 (`/auth/v1/directory/*`). No module proxies another module's console routes.
 
+### Metrics
+
+The bus serves a Prometheus exposition at `GET :9000/metrics` (no token: it is
+inside the deployment network). Three series matter for streaming:
+`bus_stream_events_written_total{type}`, `bus_stream_subscribers` and
+`bus_stream_write_seconds`.
+
 ## 6. Standalone (no containers)
 
 Run MongoDB yourself, then build and run binaries from the workspace. Every command

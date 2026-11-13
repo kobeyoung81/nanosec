@@ -127,6 +127,15 @@ Two transports deserve a note:
   turn) and skips conversations that have one, so nothing is delivered twice.
 - **`poll_outbound`** remains in the protocol and the bus for older clients; the
   gateway no longer calls it.
+- **Writes are coalesced.** Chunks of the same message and kind are merged inside
+  a 200 ms window into one document (content concatenated in order, `seq` keeps
+  the last value); a `complete` flushes the conversation's pending chunk first, so
+  a stored answer never follows its own completion. A 5,000-event burst becomes
+  about 140 documents.
+- **Metrics**: `GET /metrics` on the bus (internal network, anonymous — it is not
+  under `/api/v1`, so the internal-token guard excludes it by name) exposes
+  `bus_stream_events_written_total{type}`, `bus_stream_subscribers` and
+  `bus_stream_write_seconds`.
 
 ### 1.4 Data ownership
 

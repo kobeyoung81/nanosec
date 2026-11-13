@@ -386,11 +386,17 @@ container's tunnel (provisioner first, bus for containers not yet restarted).
 
 The console's `/api/v1/admin/*` (and its older `/api/admin/v1/*`) is split at
 nginx by the module that owns each route: configuration, catalogues, prompts,
-permission keys, alert rules and audit go to `nanoadmin` (it verifies the JWT and
-the Management/Audit roles itself); users, containers, the overview, component
-summaries, conversations, runtime and runners stay in the portal; directory
-diagnostics go to `nanoauth` (`/auth/v1/directory/*`). No module proxies another
-module's console routes.
+permission keys, alert rules, audit and the container lifecycle go to `nanoadmin`
+(it verifies the JWT and the Management/Audit/Operations roles itself); the user
+records, overview, component summaries, conversations, runtime and runner fleet
+stay in the portal; directory diagnostics go to `nanoauth`
+(`/auth/v1/directory/*`). No module proxies another module's console routes.
+
+Container restart/dispose/reprovision are desired-state writes: `nanoadmin` asks
+the queue's owner (`NANOSEC_ADMIN_PROVISIONER_URL`, default
+`http://nanorunner:8080`) to move the request, and the provisioner's poll loop
+executes it through the Docker API — so the action works even while the agent
+container is unhealthy.
 
 ### Metrics
 

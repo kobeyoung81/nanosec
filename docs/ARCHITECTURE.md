@@ -87,7 +87,8 @@ demand, one per user. That container runs the hypervisor, which in turn runs one
 | Provisioner (replica A) | Provisioner (replica B) | HTTP | Relays a tunnel request to the replica holding the connection (`provisioner_tunnels.runner_url`) |
 | Portal | Admin | HTTP | The console views it still serves need catalogue values (e.g. agent rows); reads ask for masked values |
 | Portal | `nanoauth` | HTTP | JWKS for token validation (direct; the bus proxy is legacy) |
-| Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes under `/api/v1/admin/*` (the older `/api/admin/v1/*` answers too); the service verifies the JWT and the Management/Audit roles itself, and masks secrets on reads |
+| Browser (via nginx) | Admin | HTTP | The console's configuration/catalogue/audit routes and the container lifecycle under `/api/v1/admin/*` (the older `/api/admin/v1/*` answers too); the service verifies the JWT and the Management/Audit/Operations roles itself, and masks secrets on reads |
+| Admin | Provisioner | HTTP | Container restart/dispose/reprovision: a desired-state write on the queue's owner, which executes it in its poll loop (never through the container's tunnel) |
 | Portal | Mongo | driver | Its own collections |
 | Bus | Admin | HTTP | Config writes, audit reports, catalogue writes it receives from older clients |
 | Bus | Portal | HTTP | Agent-status write and a deleted type's reference cleanup |
@@ -391,11 +392,11 @@ caller uses them; the front end already uses the target-state ones.
 | Path | Upstream |
 |---|---|
 | `/api/v1/workspace/files/*`, `/api/v1/workspace/git/*` | `nanoworkspace` |
-| `/api/v1/admin/*` | `nanoadmin` (configuration, catalogues, prompts, permission keys, alert rules, audit; it verifies the JWT itself) |
+| `/api/v1/admin/*` | `nanoadmin` (configuration, catalogues, prompts, permission keys, alert rules, audit, and the container lifecycle — it verifies the JWT itself) |
 | `/api/v1/auth/*` | `nanoauth`, rewritten to `/auth/v1/*` |
 | `/api/user/v1/files/*`, `/api/user/v1/git/*` | `nanoworkspace` (alias) |
 | `/api/user/v1/*`, `/internal/*`, `/healthz` | portal Go |
-| `/api/admin/v1/users*`, `/containers/*`, `/overview`, `/components*`, `/conversations*`, `/runtime`, `/runners*` | portal Go (the console views whose data it holds) |
+| `/api/admin/v1/users*`, `/containers/*`, `/overview`, `/components*`, `/conversations*`, `/runtime`, `/runners*` | portal Go (the console views whose data it holds — except `/containers/*`, which is the admin module's control plane) |
 | `/api/admin/v1/directory/*` | `nanoauth`, rewritten to `/auth/v1/directory/*` (alias) |
 | `/api/admin/v1/*` (everything else) | `nanoadmin` (alias of `/api/v1/admin/*`) |
 | `/api/auth/v1/*` | `nanoauth`, rewritten to `/auth/v1/*` (alias) |

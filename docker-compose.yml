@@ -272,6 +272,9 @@ services:
       # Browser tokens are verified here once nginx routes the console
       # directly; without this URL only the internal token is accepted.
       NANOAUTH_JWKS_URL: http://nanoauth:8081/auth/v1/.well-known/jwks
+      # The container control plane: restart/dispose/reprovision ask the queue's
+      # owner to move the container (desired state, executed by its poll loop).
+      NANOSEC_ADMIN_PROVISIONER_URL: http://nanorunner:8080
     ports:
       - "${NANOSEC_ADMIN_PORT:-14404}:8080"
     depends_on:

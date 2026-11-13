@@ -440,8 +440,11 @@ Two plugins exist today:
   page at `/files` **and the file browser itself**: the panel, its dialogs and the
   preview stack (text, markdown, image, PDF, DOCX, PPTX, XLSX) live in this module
   now, taking the design system, the strings, the notifications and the token from
-  the host the shell installs. The shell still keeps its own copy as the fallback
-  for its pages, which is why `ctx.ui.FilePanel` still answers.
+  the host the shell installs. A manifest may also **lend a component to the shell**
+  (`provides.filePanel`): pages in other modules embed the workspace's browser
+  through `ctx.ui.FilePanel`, which resolves the provided component and hands it the
+  page's context — one implementation, and the shell's own copy stays only as the
+  fallback while the plugin loads or is absent.
 
 A page cannot import the shell's source, so its context carries the shell's
 component kit (`ctx.ui`), the strings (`ctx.t`), a token-carrying data client

@@ -410,8 +410,22 @@ The front end is React 19 + Vite. The workbench (chat, files, git, terminal,
 configuration) is a panel host: every panel stays mounted and is moved between docks,
 so a panel must never assume it is visible when it mounts — a hidden panel measures
 zero height (see the `isLaidOut` helper and the auto-grow textarea, which re-measure
-through a `ResizeObserver`). The work library is loaded as a module-federation remote described by
-`src/portal/plugins.json`, which is also where a future plugin is registered.
+through a `ResizeObserver`).
+
+Module front ends are **remote plugins**: the shell imports no module code, it reads
+`src/portal/plugins.json` (which plugin to load, and which panels the shell itself
+ships), then fetches each plugin's manifest and loads components with Module
+Federation at runtime. A plugin contributes two things, both from the same manifest:
+
+- **panels** — workbench panels it owns (the work library's tree and document);
+- **pages** — routes it takes over. The shell keeps its own page as the fallback, so
+  a plugin can be added or removed with a manifest change rather than a rebuild.
+
+Every plugin is served from one namespace, `/plugins/<id>/` (`nginx` maps each id to
+the service that builds it), which is what lets one module's image update its front
+end without touching the shell. `nanoartifacts` is the first plugin: its build is at
+`/plugins/artifacts/`, it contributes the two library panels and the `/artifacts`
+page, and the shell's own framed page remains as the rollback path.
 
 ### 3.5 Agent service (`nanoagent`, binary `nanosec`)
 

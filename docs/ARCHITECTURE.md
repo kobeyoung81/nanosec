@@ -445,7 +445,14 @@ portal's, so a page asks the shell to open it by id instead of rebuilding it —
 for the one component too large to freeze as a prop list, the component itself:
 `ctx.ui.FilePanel` is a reference the shell hands over, so the workspace feature can
 move to its own module later without touching the pages that embed it. `ctx.params`
-carries the route parameters and `ctx.setCrumb` publishes the breadcrumb name. That
+carries the route parameters and `ctx.setCrumb` publishes the breadcrumb name.
+
+Two rules for anyone writing a page or a host: a component must be defined at module
+scope (a component created during render is a new type every render, so React
+remounts its subtree — that is an update loop, which is what a nested section
+wrapper caused once), and a context value handed to pages must be memoized or
+reduced to stable members (a setter whose identity changed every render re-ran every
+page's "publish my name" effect forever). That
 keeps one implementation of every control and one compiled stylesheet while the page
 lives in its own application; the contract lists the props and calls a page may rely
 on.

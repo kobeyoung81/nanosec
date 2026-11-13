@@ -437,9 +437,11 @@ Two plugins exist today:
 - `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the runtime snapshot
   at `/admin/runtime`, same fallback rule.
 - `workspace` (`/plugins/workspace/`, served by `nanoworkspace`) contributes the files
-  page at `/files`; the browser it embeds is still the shell's component (handed over
-  as `ctx.ui.FilePanel`), so the next step — moving the browser into this module —
-  changes one reference and nothing else.
+  page at `/files` **and the file browser itself**: the panel, its dialogs and the
+  preview stack (text, markdown, image, PDF, DOCX, PPTX, XLSX) live in this module
+  now, taking the design system, the strings, the notifications and the token from
+  the host the shell installs. The shell still keeps its own copy as the fallback
+  for its pages, which is why `ctx.ui.FilePanel` still answers.
 
 A page cannot import the shell's source, so its context carries the shell's
 component kit (`ctx.ui`), the strings (`ctx.t`), a token-carrying data client

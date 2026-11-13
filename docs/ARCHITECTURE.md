@@ -430,15 +430,19 @@ Two plugins exist today:
 - `nanoartifacts` (`/plugins/artifacts/`) contributes the two library panels and the
   `/artifacts` page; the shell's framed page remains as the rollback path.
 - `auth` (`/plugins/auth/`, served by `nanoauth` itself) contributes the account list
-  at `/admin/users`; the shell's own page remains as the fallback.
+  at `/admin/users` and the user's own account at `/me`; the shell's own pages remain
+  as the fallback.
 - `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the runtime snapshot
   at `/admin/runtime`, same fallback rule.
 
 A page cannot import the shell's source, so its context carries the shell's
-component kit (`ctx.ui`), the strings (`ctx.t`) and a token-carrying data client
-(`ctx.api`). That keeps one implementation of every control and one compiled
-stylesheet while the page lives in its own application; the contract lists the props
-a page may rely on.
+component kit (`ctx.ui`), the strings (`ctx.t`), a token-carrying data client
+(`ctx.api`), the shell's notifications (`ctx.toast`) and the shell **features** a page
+may invoke (`ctx.features`) — today the agent editor: the agent rows are the
+portal's, so a page asks the shell to open it by id instead of rebuilding it. That
+keeps one implementation of every control and one compiled stylesheet while the page
+lives in its own application; the contract lists the props and calls a page may rely
+on.
 
 ### 3.5 Agent service (`nanoagent`, binary `nanosec`)
 

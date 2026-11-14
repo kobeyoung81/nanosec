@@ -502,7 +502,10 @@ Federation at runtime. A plugin contributes two things, both from the same manif
 - **pages** — routes it takes over. The shell keeps its own page as the fallback, so
   a plugin can be added or removed with a manifest change rather than a rebuild;
 - **nav** — the console's menu entries (`{id, parent, path, title, icon, section,
-  order}`). The shell builds both the menu and the `/admin/*` routes from this list,
+  order}`). A title is localized text shipped in the manifest, not a key into the
+  shell's catalogues: the module that owns the screen owns its name in every
+  language it supports (an unknown language falls back to the manifest's first
+  entry). The shell builds both the menu and the `/admin/*` routes from this list,
   so a screen cannot be reachable in the menu and missing from the router. What
   stays in the shell is the policy: an entry names one of the shell's sections and
   the section's roles decide who sees it; an entry with an unknown section is

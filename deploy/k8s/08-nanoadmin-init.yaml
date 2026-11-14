@@ -1,0 +1,49 @@
+# The one-shot initialisation for the modules that own a prefix.
+#
+# The bus used to run this ("nanobus config seed"), which is why a cluster that
+# applied the old manifest would fail: that command no longer exists. Configuration,
+# the permission catalogue, the built-in agent types, the bundled prompts, the
+# platform skills and the first-party MCP entries are all the admin module's, and
+# the order matters — `prompts seed` only writes the types that already exist, so
+# `agent-types seed` has to come first.
+#
+# Re-run it to re-seed: every seed is idempotent (it fills what is missing and
+# leaves an administrator's edit alone).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: nanoadmin-init
+  namespace: nanosec
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: init
+          image: kobeyoung81/nanoadmin:latest
+          command: ["sh", "-c"]
+          env:
+            - name: NANOSEC_ADMIN_MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: mongo-uri
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token
+            - name: NANOSEC_BUS_URL
+              value: "http://nanobus:9000"
+          args:
+            - |
+              set -e
+              for i in $(seq 1 30); do nanoadmin migrate up && break; echo 'waiting for mongo...'; sleep 2; done
+              nanoadmin config seed
+              nanoadmin permissions seed
+              nanoadmin agent-types seed
+              nanoadmin prompts seed
+              nanoadmin skills seed
+              nanoadmin mcp seed
+              nanoadmin config set runner backend k8s
+              echo 'admin init complete'

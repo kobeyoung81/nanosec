@@ -1,0 +1,77 @@
+# The work library: spaces, nodes, artifacts, their GridFS bodies, the MCP endpoint
+# agents publish through, and its own front end (served by the portal's nginx at
+# /plugins/artifacts/). Stateless apart from the shared database, so it runs with
+# more than one replica behind its Service.
+#
+# It holds no port of its own: the portal's nginx is the only entry point, and it
+# reaches this Service over the cluster network.
+apiVersion: v1
+kind: Service
+metadata:
+  name: nanoartifacts
+  namespace: nanosec
+spec:
+  selector:
+    app: nanoartifacts
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nanoartifacts
+  namespace: nanosec
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nanoartifacts
+  template:
+    metadata:
+      labels:
+        app: nanoartifacts
+    spec:
+      containers:
+        - name: nanoartifacts
+          image: kobeyoung81/nanoartifacts:latest
+          env:
+            # One database, one connection string: the library lives in the same
+            # database under the artifacts_ prefix. Derived from the platform URI
+            # on purpose — a stale NANOARTIFACTS_MONGO_URI must not be able to
+            # point this service at a different database.
+            - name: NANOARTIFACTS_MONGO_URI
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: mongo-uri
+            - name: NANOARTIFACTS_SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: artifact-session-secret
+            - name: NANOARTIFACTS_COOKIE_PATH
+              value: "/"
+            - name: NANOSEC_BUS_URL
+              value: "http://nanobus:9000"
+            - name: NANOSEC_BUS_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: nanosec-secrets
+                  key: internal-token
+            - name: NANOAUTH_JWKS_URL
+              value: "http://nanoauth:8081/auth/v1/.well-known/jwks"
+          ports:
+            - containerPort: 8080
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 20

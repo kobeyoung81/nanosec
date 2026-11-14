@@ -14,7 +14,10 @@ spec:
           image: kobeyoung81/nanobus:latest
           command: ["sh", "-c"]
           args:
-            - "for i in $(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done && nanobus config seed && nanobus config set runner backend k8s && echo 'bus init complete'"
+            # Only this module's collections. Configuration, the catalogues and
+            # the seeds moved to nanoadmin (see 08-nanoadmin-init.yaml): the bus no
+            # longer has a `config` command, and naming one here would fail the Job.
+            - "for i in $(seq 1 30); do nanobus migrate up && break; echo 'waiting for mongo...'; sleep 2; done && echo 'bus init complete'"
           env:
             - name: NANOSEC_BUS_DATABASE_URI
               valueFrom:
@@ -40,7 +43,7 @@ metadata:
   name: nanobus
   namespace: nanosec
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: nanobus

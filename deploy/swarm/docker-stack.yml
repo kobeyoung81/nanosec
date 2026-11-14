@@ -6,13 +6,21 @@
 #   export NANOSEC_BUS_DATABASE_URI="mongodb://nanobus:PASS@db.example.com:27017/nanobus?authSource=admin"
 #   export NANOSEC_BUS_INTERNAL_TOKEN="$(openssl rand -hex 24)"
 #
-# Bootstrap (run once, after MongoDB is reachable, from any manager node):
+# Bootstrap (run once, after MongoDB is reachable, from any manager node). Each
+# module migrates and seeds its own prefix — the bus no longer has a `config`
+# command, and the seeds are the admin module's:
 #   docker run --rm -e NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
 #     kobeyoung81/nanobus:latest migrate up
-#   docker run --rm -e NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
-#     kobeyoung81/nanoadmin:nanosec config seed
-#   docker run --rm -e NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
-#     kobeyoung81/nanobus:latest config set runner backend swarm
+#   docker run --rm -e NANOSEC_ADMIN_MONGO_URI="$NANOSEC_BUS_DATABASE_URI" \
+#     kobeyoung81/nanoadmin:nanosec migrate up
+#   for seed in config permissions agent-types prompts skills mcp; do
+#     docker run --rm -e NANOSEC_ADMIN_MONGO_URI="$NANOSEC_BUS_DATABASE_URI" \
+#       kobeyoung81/nanoadmin:nanosec $seed seed
+#   done
+#   docker run --rm -e NANOSEC_ADMIN_MONGO_URI="$NANOSEC_BUS_DATABASE_URI" \
+#     kobeyoung81/nanoadmin:nanosec config set runner backend swarm
+#
+# The order matters: prompts seed only writes the agent types that already exist.
 #
 # Deploy:
 #   docker stack deploy -c deploy/swarm/docker-stack.yml nanosec

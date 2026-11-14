@@ -19,7 +19,7 @@ metadata:
   name: nanoworkspace
   namespace: nanosec
 spec:
-  replicas: 2
+  replicas: 3
   selector:
     matchLabels:
       app: nanoworkspace

@@ -6,6 +6,10 @@ metadata:
   name: nanorunner
   namespace: nanosec
 spec:
+  # One replica on purpose: with the docker backend each node runs its own runner
+  # (it can only reach the runtime on that node), and the tunnel registry forwards
+  # a request to the replica that holds the connection, so scaling this past one
+  # only helps the k8s backend.
   replicas: 1
   selector:
     matchLabels:

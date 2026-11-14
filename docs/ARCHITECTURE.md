@@ -177,9 +177,24 @@ HTTP fan-out with one query, and none of them writes:
 - `nanoportal` reads `auth_users` to show a person's name in the session log.
 - `nanoprovisioner` reads `auth_users` for the owner's tier (the quota) and display
   name (the container name).
-- `nanobus` reads `provisioner_container_requests` and `provisioner_runners` for the
-  console's container and fleet views. Both are the provisioner's collections; the bus
-  only reads them, and every write is forwarded.
+
+The bus is **not** on that list any more. Its handlers used to read `portal_agents`,
+`admin_agent_types` / `admin_models` / `admin_prompts` / the capability collections
+and `provisioner_container_requests` / `provisioner_runners` directly, with two
+environment switches (`NANOSEC_BUS_AGENT_SOURCE` / `NANOSEC_BUS_CATALOGUE_SOURCE`)
+to fall back to those reads during a rolling upgrade. Both switches are gone: every
+lookup now asks the owner over its internal API, through one file
+(`nanobus/internal/server/runtime_resolution.go`), and
+`nanobus/internal/store` names only `bus_` / `sys_` collections — a store test
+fails the build if a foreign collection name appears there.
+
+The internal APIs the bus calls:
+
+| Question | Owner | Endpoint |
+|---|---|---|
+| one agent row, its session modes, the fleet list | portal | `GET /internal/v1/agents/{id}`, `GET /internal/v1/agents-fleet` |
+| runtime resolution, mode capabilities, a mode's model, prompt blocks, types, models, providers, catalogue visibility | admin | `POST /api/v1/internal/agent-runtime`, `/mode-capabilities`, `/agent-default-model`, `GET /internal/...` reads |
+| runners, container queue, status buckets | provisioner | `GET /api/v1/internal/console/{runners,containers}…` |
 
 ---
 

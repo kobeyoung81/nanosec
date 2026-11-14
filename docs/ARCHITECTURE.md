@@ -445,6 +445,12 @@ Two plugins exist today:
   through `ctx.ui.FilePanel`, which resolves the provided component and hands it the
   page's context — one implementation, and the shell's own copy stays only as the
   fallback while the plugin loads or is absent.
+- the same module contributes the **git panel** (`workspace.git`): a workbench panel
+  with the repository state, the file tree, staging and the diff view. A panel gets
+  the same services a page does (`PanelContext` = the shell's strings, kit, data
+  client and notifications, plus the focused agent), so it renders in the shell's
+  tree without importing its source. A stored layout that still says `git-browser`
+  is mapped onto the new id when it is read.
 
 A page cannot import the shell's source, so its context carries the shell's
 component kit (`ctx.ui`), the strings (`ctx.t`), a token-carrying data client

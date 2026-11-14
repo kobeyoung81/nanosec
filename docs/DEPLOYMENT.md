@@ -137,6 +137,22 @@ The bus has no anonymous `/healthz`: its REST surface is guarded, and an
 unauthenticated probe is refused rather than served. `GET /api/v1/runners` is a cheap
 liveness check that also proves its store is reachable.
 
+Every module serves an anonymous `GET /metrics` next to `/healthz` (`curl -s
+http://localhost:14403/metrics | head`), the portal's through an explicit nginx rule.
+
+**Only the portal is published off the host.** The bus, auth, gateway and admin
+ports are mapped to `127.0.0.1` (`14400`, `14401`, `14402`, `14404`), so a local
+operator or probe still reaches them over loopback while a machine on the network
+cannot. The compose file also sets `nofile` to 65536 for every service: the default
+soft limit of 1024 is reached long before the platform is busy, and the tunnel rules
+assume room for 65536. Kubernetes has no field for that limit — set it in the node
+runtime (`deploy/k8s/README.md`).
+
+**Rolling restart of the runner**: `POST /api/v1/internal/tunnels/drain
+{"deadline_seconds":60}` (shared token) stops accepting new tunnels with `503` and
+closes the live ones at the deadline, so containers reconnect to a replica that is
+staying. Do that before stopping a runner replica.
+
 Build the per-user agent image the provisioner launches (the `nanosec` service is
 behind the `agent` profile, so `up` does not start or build it):
 

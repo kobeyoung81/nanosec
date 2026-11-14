@@ -141,10 +141,11 @@ Two transports deserve a note:
   so a stored answer never follows its own completion and the gateway never closes
   a subscription on an event the log has not got. A 5,000-event burst becomes
   about 140 documents.
-- **Metrics**: `GET /metrics` on the bus (internal network, anonymous — it is not
-  under `/api/v1`, so the internal-token guard excludes it by name) exposes
-  `bus_stream_events_written_total{type}`, `bus_stream_subscribers` and
-  `bus_stream_write_seconds`.
+- **Metrics** (see §1.5): every module serves `GET /metrics` anonymously, outside
+  its token guard; the bus's are `bus_stream_events_written_total{type}`,
+  `bus_stream_subscribers`, `bus_stream_write_seconds`, `bus_agent_sockets`,
+  `bus_agent_socket_pushes_total{kind}`, `bus_rpc_requests_total{type}` and
+  `bus_rate_limited_total`.
 
 ### 1.4 Data ownership
 
@@ -195,6 +196,46 @@ The internal APIs the bus calls:
 | one agent row, its session modes, the fleet list | portal | `GET /internal/v1/agents/{id}`, `GET /internal/v1/agents-fleet` |
 | runtime resolution, mode capabilities, a mode's model, prompt blocks, types, models, providers, catalogue visibility | admin | `POST /api/v1/internal/agent-runtime`, `/mode-capabilities`, `/agent-default-model`, `GET /internal/...` reads |
 | runners, container queue, status buckets | provisioner | `GET /api/v1/internal/console/{runners,containers}…` |
+
+### 1.5 Observability
+
+Every module serves `GET /metrics` on its own HTTP port, anonymously and outside its
+token guard (a scraper is infrastructure, not a caller). Each name carries the
+module's prefix, so one dashboard covers the platform and two modules cannot collide:
+
+| Prefix | Module-specific series |
+|---|---|
+| `bus_` | stream events written, subscribers, write latency, agent sockets and pushes, RPC messages by type, rate-limited requests |
+| `gateway_` | inbound messages per channel, outbound events per channel and type, open conversation streams, SSE reconnects |
+| `provisioner_` | active tunnels, tunnel requests by outcome, request duration, body size |
+| `admin_` / `auth_` / `portal_` / `workspace_` / `artifacts_` | HTTP requests by route pattern, method and status, handler latency, database command counts and latency |
+
+Two conventions make these usable:
+
+- **The route label is the ServeMux pattern**, not the path. A path parameter never
+  becomes a label value, and an unmatched request is reported as `unmatched`, so a
+  scanner cannot mint a time series per URL.
+- **Database numbers come from one driver monitor** attached in the module's
+  `store.Open`. Counting commands separately from handler latency is what tells "this
+  module is slow" from "the database is slow".
+
+The portal's nginx needs an explicit `location = /metrics`; without it the SPA
+fallback answers with `index.html` and a scraper records nothing.
+
+**Tunnel capacity rules** (provisioner). The tunnel carries HTTP requests to a
+container over one WebSocket, so its failure modes are a queue and a backlog:
+
+- at most **32 requests in flight per connection**; past that the caller gets `429`
+  rather than a request that times out a minute later;
+- the cross-replica holder lookup is **cached for five seconds** and invalidated when
+  a connection comes or goes, so a forward does not cost a database read;
+- `POST /api/v1/internal/tunnels/drain` refuses new registrations with `503` and
+  closes the live connections at the deadline — the rolling-restart switch;
+- a body over **2 MiB** is refused with `413`: base64 inside a WebSocket frame costs a
+  third more bytes and holds the whole body in memory at both ends. Large transfers
+  need a direct path (object storage), which is not built yet;
+- `nofile` is **65536** in the compose and swarm manifests; Kubernetes has no field
+  for it, so the node runtime has to provide it (`deploy/k8s/README.md`).
 
 ---
 

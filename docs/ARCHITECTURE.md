@@ -500,7 +500,20 @@ Federation at runtime. A plugin contributes two things, both from the same manif
 
 - **panels** — workbench panels it owns (the work library's tree and document);
 - **pages** — routes it takes over. The shell keeps its own page as the fallback, so
-  a plugin can be added or removed with a manifest change rather than a rebuild.
+  a plugin can be added or removed with a manifest change rather than a rebuild;
+- **nav** — the console's menu entries (`{id, parent, path, title, icon, section,
+  order}`). The shell builds both the menu and the `/admin/*` routes from this list,
+  so a screen cannot be reachable in the menu and missing from the router. What
+  stays in the shell is the policy: an entry names one of the shell's sections and
+  the section's roles decide who sees it; an entry with an unknown section is
+  visible to administrators only. With no plugin contributing navigation the console
+  keeps its own list, which is what makes removing the admin plugin a rollback
+  rather than an empty console.
+
+The contract exists in four copies (the shell plus the three plugin hosts that build
+against it). They are **generated**: `nanoportal/web/scripts/sync-contract.mjs`
+writes them and `--check` reports drift. Hand-copying is how a field once reached
+one copy and not another, discovered only when an unrelated plugin build failed.
 
 Every plugin is served from one namespace, `/plugins/<id>/` (`nginx` maps each id to
 the service that builds it), which is what lets one module's image update its front
@@ -515,8 +528,11 @@ Four plugins exist today:
   account at `/me`; the shell's own pages remain as the fallback. A contribution may
   be a route pattern — the shell matches it against the current location, and the
   page reads the parameters from `ctx.params`.
-- `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the runtime snapshot
-  at `/admin/runtime`, same fallback rule.
+- `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the console's
+  navigation and the screens it renders: the overview, the component table (with its
+  `/admin/components/:type` detail route), the audit log and the runtime snapshot.
+  The console's other screens still come from the shell's fallback while they move
+  across, one at a time, which is why a menu entry may exist without a page.
 - `workspace` (`/plugins/workspace/`, served by `nanoworkspace`) contributes the files
   page at `/files` **and the file browser itself**: the panel, its dialogs and the
   preview stack (text, markdown, image, PDF, DOCX, PPTX, XLSX) live in this module

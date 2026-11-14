@@ -34,3 +34,15 @@ nanoadmin config set runner.storage.storageClass <your-rwx-class>
 The provisioner reads both keys from the configuration (no restart needed) and
 creates one PVC per user. Without them it falls back to `ReadWriteOnce`, which is
 correct for a single node and wrong for a cluster.
+
+## File descriptors
+
+Every replica holds one descriptor per open tunnel, stream subscription and database
+connection, and the default soft limit (1024) is reached long before the platform is
+busy: the tunnel rules assume room for 65536. Docker Compose and Swarm take that from
+the manifests (`ulimits.nofile`); Kubernetes has no such field, so it has to come from
+the container runtime. Under containerd the default is inherited from the kubelet
+process — set `LimitNOFILE=65536` (or higher) on the nodes' systemd unit, or add
+`"default-ulimits": {"nofile": {"Name": "nofile", "Soft": 65536, "Hard": 65536}}` to
+`/etc/docker/daemon.json` when Docker is the runtime. Without it a large deployment
+fails with `too many open files` in the tunnel and stream logs, not with a crash.

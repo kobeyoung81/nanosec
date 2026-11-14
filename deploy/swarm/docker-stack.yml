@@ -40,6 +40,13 @@ services:
     ports:
       - target: 9000
         published: 9000
+    # One descriptor per tunnel, stream and database connection. Docker's
+    # default soft limit (1024) is reached by a busy stack; the tunnel rules
+    # assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -52,6 +59,13 @@ services:
     ports:
       - target: 8081
         published: 8081
+    # One descriptor per tunnel, stream and database connection. Docker's
+    # default soft limit (1024) is reached by a busy stack; the tunnel rules
+    # assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     deploy:
       placement:
         constraints: [node.role == manager]
@@ -62,6 +76,13 @@ services:
     environment:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?export NANOSEC_BUS_INTERNAL_TOKEN first}
     networks: [nanosec]
+    # One descriptor per tunnel, stream and database connection. Docker's
+    # default soft limit (1024) is reached by a busy stack; the tunnel rules
+    # assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     deploy:
       replicas: 1
 
@@ -71,6 +92,13 @@ services:
     environment:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?export NANOSEC_BUS_INTERNAL_TOKEN first}
     networks: [nanosec]
+    # One descriptor per tunnel, stream and database connection. Docker's
+    # default soft limit (1024) is reached by a busy stack; the tunnel rules
+    # assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     deploy:
       replicas: 1
 
@@ -84,6 +112,13 @@ services:
     ports:
       - target: 80
         published: 8080
+    # One descriptor per tunnel, stream and database connection. Docker's
+    # default soft limit (1024) is reached by a busy stack; the tunnel rules
+    # assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     deploy:
       placement:
         constraints: [node.role == manager]

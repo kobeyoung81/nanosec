@@ -52,6 +52,13 @@ services:
     image: kobeyoung81/nanobus:nanosec
     entrypoint: nanobus
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     environment:
       # The MongoDB the store reads and writes. Required: the bus refuses to
       # start without it.
@@ -72,7 +79,9 @@ services:
       # are forwarded to it.
       NANOSEC_BUS_PROVISIONER_BASE_URL: http://nanorunner:8080
     ports:
-      - "14400:9000"
+      # Only the portal is meant to be reachable from off the host; the rest are
+      # published on the loopback interface for local operators and probes.
+      - "127.0.0.1:14400:9000"
     depends_on:
       bus-init:
         condition: service_completed_successfully
@@ -84,6 +93,13 @@ services:
       context: ./nanoauth
     image: kobeyoung81/nanoauth:nanosec
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     environment:
       # Identity's own collections live in the platform database.
       NANOAUTH_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
@@ -92,7 +108,7 @@ services:
       NANOSEC_ADMIN_URL: http://nanoadmin:8080
       NANOAUTH_ADDR: ":8081"
     ports:
-      - "${NANOAUTH_PORT:-14401}:8081"
+      - "127.0.0.1:${NANOAUTH_PORT:-14401}:8081"
     depends_on:
       admin-init:
         condition: service_completed_successfully
@@ -104,6 +120,13 @@ services:
       context: ./nanoprovisioner
     image: kobeyoung81/nanoprovisioner:nanosec
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     depends_on:
       - nanobus
     environment:
@@ -150,6 +173,13 @@ services:
       context: ./nanoworkspace
     image: kobeyoung81/nanoworkspace:nanosec
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     environment:
       NANOSEC_WORKSPACE_ADDR: ":8080"
       # Browser tokens are verified here against nanoauth's key set.
@@ -172,10 +202,17 @@ services:
       context: ./nanogateway
     image: kobeyoung81/nanogateway:nanosec
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     depends_on:
       - nanobus
     ports:
-      - "14402:8080"
+      - "127.0.0.1:14402:8080"
     environment:
       # Shared token for the bus's internal endpoints (REST + the tunnel and
       # terminal sockets). Every component of the stack holds the same value, and
@@ -198,6 +235,13 @@ services:
       context: ./nanoportal
     image: kobeyoung81/nanoportal:nanosec
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     environment:
       NANO_PORTAL_BUS_URL: http://nanobus:9000
       # Shared token for the bus's internal endpoints (REST + the tunnel and
@@ -228,6 +272,13 @@ services:
       context: ./nanoartifacts
     image: kobeyoung81/nanoartifacts:nanosec
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     environment:
       # Its own database, not the bus's. Required: the service refuses to start
       # without it (a missing URI must not fall back to a default database).
@@ -263,6 +314,13 @@ services:
       context: ./nanoadmin
     image: kobeyoung81/nanoadmin:nanosec
     restart: unless-stopped
+    # One file descriptor per open tunnel, stream subscription and database
+    # connection: the default 1024 soft limit is reached long before the
+    # platform is busy. The tunnel rules assume room for 65536.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
     environment:
       # Same database as every module, under the admin_ prefix.
       NANOSEC_ADMIN_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
@@ -276,7 +334,7 @@ services:
       # owner to move the container (desired state, executed by its poll loop).
       NANOSEC_ADMIN_PROVISIONER_URL: http://nanorunner:8080
     ports:
-      - "${NANOSEC_ADMIN_PORT:-14404}:8080"
+      - "127.0.0.1:${NANOSEC_ADMIN_PORT:-14404}:8080"
     depends_on:
       - nanobus
 

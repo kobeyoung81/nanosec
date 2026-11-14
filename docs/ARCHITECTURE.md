@@ -250,9 +250,24 @@ type Message struct {
 }
 ```
 
-`Client` is an HTTP client for the bus. It normalises `ws://`/`wss://` URLs to
-`http://`/`https://`, sends `POST /api/v1/rpc`, and returns the decoded reply (a 204
-means the request had no payload). The default timeout is 60s.
+`Client` talks to the bus over `POST /api/v1/rpc` and returns the decoded reply (a
+204 means the request had no payload). The default timeout is 60s. It normalises
+`ws://`/`wss://` URLs to `http://`/`https://`, and `DialWS` turns the same client into
+an **agent socket** client:
+
+- `nanoprotocol.DialWS` opens `GET /ws/agent` and `RegisterAgentSocket` binds the
+  connection to a user (and optionally one agent). From then on every request runs on
+  that connection, the bus's replies correlate by order, and the two notifications
+  arrive as pushes: `inbound_ready` (a message is waiting — claim it, nothing more) and
+  `platform_event` (the payload of a `config_changed`/`agents_changed` notification, so
+  an agent needs no SSE subscription of its own).
+- The socket is an optimisation, never a dependency: before registration, and whenever
+  it is down, `Send` takes the HTTP path and `ConfigChanges`/`AgentChanges` fall back
+  to the SSE streams. The client re-dials and re-registers with backoff on its own.
+- The pushes carry no state, which is what makes the rollout safe: a duplicated push
+  costs one `poll_inbound` (the claim is atomic, so nothing is delivered twice) and a
+  lost one is covered by the agent's fallback poll — five seconds with a socket,
+  500 ms without one.
 
 The message types the bus dispatches today:
 
@@ -325,8 +340,15 @@ Queues:
 - `bus_inbound_queue` / `bus_outbound_queue`. A claim is one atomic
   `findOneAndUpdate` that flips `status` from `pending` to `claimed`, so two pollers
   cannot take the same message.
-- The agent polls inbound every 500 ms. The inbound row is kept (claimed, not
-  deleted), which makes the queue an append-only log of what was delivered.
+- An insert on `bus_inbound_queue` is pushed to the agent sockets of that user, from
+  whichever replica holds them: each replica follows the queue with a change-stream
+  tailer, so no message routing between replicas is needed. The push only says a
+  message exists — the claim stays in `poll_inbound`.
+- The agent polls inbound every 500 ms **when it has no socket**, and every 5 s with
+  one, as the safety net for a push that never landed. The inbound row is kept
+  (claimed, not deleted), which makes the queue an append-only log of what was
+  delivered. `bus_rpc_requests_total{type="poll_inbound"}` is how the change is
+  measured; `bus_agent_sockets` counts the connections on a replica.
 
 Guards: every protected endpoint requires `NANOSEC_BUS_INTERNAL_TOKEN`
 (constant-time compare, `Authorization: Bearer` or `?token=` for a WebSocket
@@ -691,7 +713,7 @@ Bus
   4. insert into bus_inbound_queue (pending)
   │
   ▼
-Agent child (poll every 500 ms)
+Agent child (woken by the bus; polls every 5 s as a safety net, 500 ms without a socket)
   5. claim the oldest pending row (pending → claimed)
   6. load the session, build the request, call the model
   7. execute tools, loop; stream chunks as they are produced
@@ -982,3 +1004,4 @@ the super-repo; pushing the super-repo's `master` is what triggers it.
 | 4.0 | 2026-07-30 | Sync with code: 12 migrations, BindingID, ConfigItems API, ContextualTool, DockerClient |
 | 5.0 | 2026-08-15 | Enterprise platform: 26 MySQL migrations, nanoauth, REST + SSE, multi-agent runtime, hypervisor/tunnel, docker/swarm/k8s |
 | 6.0 | 2026-11-11 | Rewritten after the module split (P1/P2): MongoDB with one writer per prefix; config, catalogue and audit in `nanoadmin`; agents, sessions and bindings in `nanoportal`; provisioning queue and runner registry in `nanoprovisioner`; all `auth_*` collections in `nanoauth`; onboarding creates a default agent; RPC over HTTP instead of a WebSocket client; the work library and the local ASR sidecar; corrected the "gateway polls outbound" drift (it is SSE) |
+| 6.1 | 2026-11-14 | The agent socket: one WebSocket per agent process carries the RPC envelope and the two push notices (inbound_ready, platform_event), so the bus wakes an agent instead of being polled twice a second; the queue tailer pushes from the replica that holds the socket; the fallback poll (5 s) and the SSE streams remain for old and disconnected clients |

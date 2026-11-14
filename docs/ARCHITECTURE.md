@@ -45,7 +45,7 @@ or restarted on its own. Three rules hold the split together:
 |---|---|---|---|
 | `nanobus` | `nanobus` | Message transport: HTTP RPC (`POST /api/v1/rpc`), REST, SSE; per-user inbound/outbound queues; agent tunnel (files, git, terminals); runner registry; WeChat KF cursors. It forwards the console's writes to the module that owns the collection instead of performing them. | **yes** — `bus_*`, `sys_*` (reads `provisioner_*` for the console) |
 | `nanogateway` | `nanogateway` | Channel adapters (CLI, WeCom, Feishu, web chat, WeChat KF); identity resolution; one SSE subscription per channel for outbound delivery. | no |
-| `nanoportal` | `nanoportal` (Go server + nginx + React) | The user console and the user-facing data: agents, agent groups, binding preferences, the conversation projection, the console's operational views (users, containers, overview, conversations, runtime, runners). nginx sends the catalogue/config/audit pages straight to the admin module and identity straight to nanoauth; the portal proxies only the file/git/terminal surface to the bus and provisioner. | **yes** — `portal_*` |
+| `nanoportal` | `nanoportal` (Go server + nginx + React) | The user console and the user-facing data: agents, agent groups, binding preferences, the conversation projection, the console's operational views (users, containers, overview, conversations, runtime, runners). nginx sends the catalogue/config/audit pages straight to the admin module, identity straight to nanoauth and files/git to the workspace module; the portal server keeps only the surfaces whose data it holds, plus the terminal bridge (the tunnel belongs to the provisioner). | **yes** — `portal_*` |
 | `nanoagent` | `nanosec` (one container per user) | The user's runtime. Inside the container a **hypervisor** supervises one child process per agent; each child runs the ReAct loop, tools, skills, memory, cron and its own JSONL sessions. | no (files live in the container volume) |
 | `nanoprovisioner` | `nanoprovisioner` | Consumes the provisioning queue; creates, restarts and disposes agent containers through docker / swarm / k8s; applies per-tier quotas. | **yes** — `provisioner_*` |
 | `nanoauth` | `nanoauth` | Accounts, channel links, OAuth links, refresh tickets, git shortcuts, per-user secrets; login, RS256 tokens and JWKS; corporate-directory login. | **yes** — `auth_*` |
@@ -375,9 +375,12 @@ The Go server does four things:
    conversation projection are served locally from `portal_*` (list, create, update,
    delete, restart, re-provision, arrange, attention, sessions with ETag and history
    paging).
-3. **Proxy.** Everything the console does not own is forwarded: catalogues and
-   configuration and audit to admin, accounts/links/shortcuts/secrets to nanoauth,
-   containers/runners/capabilities and the file/git/terminal surface to the bus.
+3. **Proxy.** The console surfaces whose data another module owns are dispatched by
+   nginx straight to that module (see the path table below): catalogues,
+   configuration, audit and the container control plane to admin, identity to
+   nanoauth, files and git to workspace. What the portal server still forwards is the
+   terminal bridge — a live-terminal request goes to the bus, which relays it through
+   the tunnel's owner.
 4. **Internal API.** `/internal/v1/*` is a second surface, addressed by the other
    services with the shared token (never by a browser): agent status, session
    projection writes and reads, binding agent, agent reference cleanup. It refuses
@@ -425,7 +428,7 @@ Every plugin is served from one namespace, `/plugins/<id>/` (`nginx` maps each i
 the service that builds it), which is what lets one module's image update its front
 end without touching the shell.
 
-Two plugins exist today:
+Four plugins exist today:
 
 - `nanoartifacts` (`/plugins/artifacts/`) contributes the two library panels and the
   `/artifacts` page; the shell's framed page remains as the rollback path.

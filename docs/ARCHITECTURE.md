@@ -527,10 +527,13 @@ Four plugins exist today:
 - `nanoartifacts` (`/plugins/artifacts/`) contributes the two library panels and the
   `/artifacts` page; the shell's framed page remains as the rollback path.
 - `auth` (`/plugins/auth/`, served by `nanoauth` itself) contributes the account list
-  at `/admin/users`, the account detail at `/admin/users/:id` and the user's own
-  account at `/me`; the shell's own pages remain as the fallback. A contribution may
-  be a route pattern — the shell matches it against the current location, and the
-  page reads the parameters from `ctx.params`.
+  at `/admin/users`, the account detail at `/admin/users/:id`, the user's own account
+  at `/me`, and the three sign-in screens (`/login`, `/register`,
+  `/change-password`); the shell's own pages remain as the fallback. A contribution
+  may be a route pattern — the shell matches it against the current location, and the
+  page reads the parameters from `ctx.params`. Storing the session stays the shell's:
+  a page hands the issued tokens back through `features.signIn`, so the rule that
+  another account signing in drops the previous one's caches keeps working.
 - `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the console's
   navigation and the screens it renders: the overview, the component table (with its
   `/admin/components/:type` detail route), the configuration centre, the audit log,
@@ -544,7 +547,8 @@ Four plugins exist today:
   kit, strings, notifications and data client from there, so a component moved from
   the shell did not have to change its props.
 - `workspace` (`/plugins/workspace/`, served by `nanoworkspace`) contributes the files
-  page at `/files` **and the file browser itself**: the panel, its dialogs and the
+  page at `/files`, the standalone preview at `/files/view` **and the file browser
+  itself**: the panel, its dialogs and the
   preview stack (text, markdown, image, PDF, DOCX, PPTX, XLSX) live in this module
   now, taking the design system, the strings, the notifications and the token from
   the host the shell installs. A manifest may also **lend a component to the shell**

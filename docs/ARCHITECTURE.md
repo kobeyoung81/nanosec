@@ -562,6 +562,15 @@ Four plugins exist today:
   client and notifications, plus the focused agent), so it renders in the shell's
   tree without importing its source. A stored layout that still says `git-browser`
   is mapped onto the new id when it is read.
+- **the chat workbench itself** is that module's too: `/agent` (agent list, grouped
+  with drag order, conversation tabs, the transcript and composer, the terminal, the
+  file browser, the account's agent settings and the git panel) is one page that
+  brings its own dock layout. The panels stay internal to the page rather than
+  separate contributions — they share the workbench's context, its layout storage and
+  its focused agent, and the screen is useless without them. The shell keeps its own
+  `AgentPage` as the rollback path, so removing the plugin from the manifest restores
+  the previous screen. Panel ids, layout keys and stored state are unchanged, so a
+  browser that had a layout before the move reopens with it.
 
 A page cannot import the shell's source, so its context carries the shell's
 component kit (`ctx.ui`), the strings (`ctx.t`), a token-carrying data client

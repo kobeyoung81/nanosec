@@ -534,10 +534,15 @@ Four plugins exist today:
 - `admin` (`/plugins/admin/`, served by `nanoadmin`) contributes the console's
   navigation and the screens it renders: the overview, the component table (with its
   `/admin/components/:type` detail route), the configuration centre, the audit log,
-  the conversation log, the alert rules and the runtime snapshot. The console's
-  remaining screens (directory, voice, models, agent types, capabilities) still come
-  from the shell's fallback while they move across, which is why a menu entry may
-  exist without a page.
+  the conversation log, the alert rules, the capability centre, the model centre and
+  the runtime snapshot. The console's remaining screens (directory, voice, agent
+  types) still come from the shell's fallback while they move across, which is why a
+  menu entry may exist without a page.
+
+  A page's context reaches the components it renders through the plugin's own
+  provider (`host.tsx`): a nested form and a lib module both read the mounted page's
+  kit, strings, notifications and data client from there, so a component moved from
+  the shell did not have to change its props.
 - `workspace` (`/plugins/workspace/`, served by `nanoworkspace`) contributes the files
   page at `/files` **and the file browser itself**: the panel, its dialogs and the
   preview stack (text, markdown, image, PDF, DOCX, PPTX, XLSX) live in this module

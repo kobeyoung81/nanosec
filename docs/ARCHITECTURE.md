@@ -535,9 +535,9 @@ Four plugins exist today:
   navigation and the screens it renders: the overview, the component table (with its
   `/admin/components/:type` detail route), the configuration centre, the audit log,
   the conversation log, the alert rules, the capability centre, the model centre, the
-  dictation console, the directory login and the runtime snapshot. The console's last
-  screen (agent types) still comes from the shell's fallback while it moves across,
-  which is why a menu entry may exist without a page.
+  dictation console, the directory login, the agent-type editor and the runtime
+  snapshot — the whole console. The shell keeps its own pages only as the rollback
+  path for a deployment that removes the plugin.
 
   A page's context reaches the components it renders through the plugin's own
   provider (`host.tsx`): a nested form and a lib module both read the mounted page's

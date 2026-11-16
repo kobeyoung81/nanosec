@@ -275,6 +275,26 @@ docker compose down              # stop everything
 > needs `docker compose up -d --force-recreate admin-init bus-init` (or a full
 > `down`/`up`) to re-run them.
 
+## 3.5 多栈同宿主：一个前缀命名整栈
+
+同一台 Docker 守护进程上跑多个栈（生产 / staging / 开发）时，所有名字由一个变量决定：
+
+```
+ENV_PREFIX=stg-    # staging；dev- = 开发；空 = 生产
+```
+
+| 名字 | 公式 | 例 |
+|---|---|---|
+| compose 项目 | `${ENV_PREFIX}nanosec`（compose 顶层 `name:`） | `stg-nanosec` |
+| 服务容器 | `<项目>-<服务>-1` | `stg-nanosec-nanobus-1` |
+| 网络 | `<项目>_default` | `stg-nanosec_default` |
+| agent 容器 / 数据卷 | `${ENV_PREFIX}nanosec-agent-<id>` / `${ENV_PREFIX}nanosec-data-<id>` | `stg-nanosec-agent-…` |
+| runner 身份 | `${ENV_PREFIX}nanosec` | `stg-nanosec` |
+| Mongo 库 / 用户 | `${ENV_PREFIX}nanosec`，`-` 换成 `_` | `stg_nanosec` |
+
+`docker-compose.yml` 把 `ENV_PREFIX` 传给 runner 的 `NANOSEC_RUNNER_NAME_PREFIX` 与 `--runner-id`；
+网络留空即用 runner 自己的网络（`<项目>_default`）。**从旧栈切换的操作手册见 `docs/CUTOVER.md`。**
+
 ## 4. Docker Swarm
 
 Stack file: `deploy/swarm/docker-stack.yml` (medium tier, 20–100 users). A stack file

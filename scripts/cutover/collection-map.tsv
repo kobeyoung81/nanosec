@@ -1,0 +1,34 @@
+# 源库	旧集合	新集合	策略
+# 源库：bus = 旧栈总线库（cutover.env 的 OLD_DB）；artifacts = 旧作品库库（OLD_ARTIFACTS_DB）。
+# 策略：business = 先 drop 再导入（旧栈为准）；platform = 默认跳过（staging 已有自己的配置）。
+bus	users	auth_users	business
+bus	oauth_providers	auth_oauth_providers	business
+bus	git_browser_shortcuts	auth_git_shortcuts	business
+bus	user_secrets	auth_secrets	business
+bus	agents	portal_agents	business
+bus	agent_sessions	portal_sessions	business
+bus	agent_groups	portal_agent_groups	business
+bus	binding_agent_preferences	portal_binding_preferences	business
+bus	container_requests	provisioner_container_requests	business
+artifacts	artifacts	artifacts	business
+artifacts	artifact_versions	artifacts_versions	business
+artifacts	artifact_grants	artifacts_grants	business
+artifacts	spaces	artifacts_spaces	business
+artifacts	space_grants	artifacts_space_grants	business
+artifacts	nodes	artifacts_nodes	business
+artifacts	uploads	artifacts_uploads	business
+artifacts	fs.files	artifacts_fs.files	business
+artifacts	fs.chunks	artifacts_fs.chunks	business
+bus	service_config_items	admin_config	platform
+bus	agent_types	admin_agent_types	platform
+bus	agent_type_overrides	admin_agent_type_overrides	platform
+bus	permission_keys	admin_permission_keys	platform
+bus	models	admin_models	platform
+bus	model_providers	admin_model_providers	platform
+bus	alert_rules	admin_alert_rules	platform
+bus	builtin_tools	admin_builtin_tools	platform
+bus	mcp_servers	admin_mcp_servers	platform
+bus	skills	admin_skills	platform
+bus	user_skill_acks	admin_user_skill_acks	platform
+bus	session_head_prompts	admin_prompts	platform
+bus	audit_log	admin_audit_log	platform

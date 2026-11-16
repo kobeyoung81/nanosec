@@ -4,6 +4,15 @@
 # Both URIs name that same database; a component writes only its own prefix and
 # reads everything else over HTTP. Copy .env.example to .env and fill in the URIs
 # and the shared token before `docker compose up -d`.
+# Every Docker name in this stack derives from ENV_PREFIX plus the fixed base
+# name `nanosec`: the project (`stg-nanosec`), the network
+# (`stg-nanosec_default`), and — through NANOSEC_RUNNER_NAME_PREFIX — the agent
+# containers (`stg-nanosec-agent-<id>`) and their data volumes
+# (`stg-nanosec-data-<id>`). `ENV_PREFIX=dev-` for a development stack, empty for
+# production. The only name that cannot follow the variable is the MongoDB
+# database, where `-` becomes `_` (stg_nanosec) because it lives in the URI.
+name: ${ENV_PREFIX:-}nanosec
+
 services:
   # One-shot: applies the admin manifests and seeds the platform defaults the
   # console edits. It runs before bus-init because the bus's own seeds read
@@ -132,8 +141,14 @@ services:
     environment:
       # Optional: override the Docker network agent containers attach to (the
       # runner auto-detects its own Compose network when unset/incorrect).
+      # Empty means "the network this runner is attached to", which is this
+      # project's own <project>_default. Leaving it empty is how the stack stays
+      # correct without a second variable.
       NANOSEC_RUNNER_NETWORK: ${NANOSEC_RUNNER_NETWORK:-}
       NANOSEC_RUNNER_AGENT_IMAGE: ${NANOSEC_RUNNER_AGENT_IMAGE:-}
+      # Prefix for the agent container and data volume names: the same variable
+      # that names the compose project names them too.
+      NANOSEC_RUNNER_NAME_PREFIX: ${ENV_PREFIX:-}
       # Shared token for the bus's internal endpoints (REST + the tunnel and
       # terminal sockets). Every component of the stack holds the same value, and
       # so does every agent container the runner provisions. Override it from the
@@ -163,7 +178,7 @@ services:
       # power. Anything that compromises this container compromises the host,
       # and nothing else in this compose file should get this mount.
       - /var/run/docker.sock:/var/run/docker.sock
-    command: ["--bus-url", "ws://nanobus:9000", "--runner-id", "nanorunner"]
+    command: ["--bus-url", "ws://nanobus:9000", "--runner-id", "${ENV_PREFIX:-}nanosec"]
 
   # The workspace surface: the file browser, previews and the git panel. It holds
   # no data — the bytes live in the agent container's volume, the agent rows in

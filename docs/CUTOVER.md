@@ -32,6 +32,17 @@ ENV_PREFIX=stg-        # staging；dev- = 开发；空 = 生产
 改名是一次性动作，已由 `stage-init` 完成；它做四件事：停旧项目 → 建库与用户 → 把平台集合
 （`admin_*`，含 JWT 私钥与 provider key）搬进新库 → 用新项目名起栈并把 runner 的三个键写进配置。
 
+### 2.1 staging 目前的账号状态
+
+`stage-init` 只搬**平台配置**（`admin_*`），业务数据按约定丢弃，所以库里**没有账号**。
+要在 staging 上先做内部测试，二选一：
+
+- 直接在 `https://nanosec.kobeyoung81.cn/register` 注册一个账号（全新库里首个注册账号自动成为管理员）；
+- 或者提前跑一次 `./scripts/stack-cutover.sh migrate-db`，把旧栈账号/会话导进来（等同切一半，正式切换时还会覆盖一次）。
+
+改名前的旧库 `nanosec` 仍保留在同一个实例上（含改名前的 staging 测试数据），确认不再需要后
+用 `mongosh` 手工 `dropDatabase`；脚本不自动删它。
+
 ## 3 白天演练（随时可做，不碰旧栈）
 
 ```bash

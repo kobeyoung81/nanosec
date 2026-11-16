@@ -268,15 +268,13 @@ stage_init() {
   # root restores into the new database: the staging user only holds rights on its
   # own database, which does not exist yet.
   write_uri_env "$WORK/dst.env" "$(uri_no_db "$(root_uri)")"
+  # mongodump accepts ONE --collection; passing several silently keeps the last
+  # one. Dump the whole database and filter on restore instead.
   docker run --rm --network host --env-file "$WORK/src.env" -v "$WORK:/work" "$MONGO_IMAGE" \
-    bash -c "mongodump --uri \"\$MONGO_URI\" --db $old_db --collection admin_config --collection admin_models \
-      --collection admin_model_providers --collection admin_agent_types --collection admin_agent_type_overrides \
-      --collection admin_prompts --collection admin_permission_keys --collection admin_builtin_tools \
-      --collection admin_skills --collection admin_user_skill_acks --collection admin_mcp_servers \
-      --collection admin_alert_rules --out /work/platform --gzip"
+    bash -c "mongodump --uri \"\$MONGO_URI\" --db $old_db --out /work/platform --gzip"
   docker run --rm --network host --env-file "$WORK/dst.env" -v "$WORK:/work" "$MONGO_IMAGE" \
     bash -c "mongorestore --uri \"\$MONGO_URI\" --gzip --drop --dir /work/platform \
-      --nsInclude '$old_db.*' --nsFrom '$old_db.*' --nsTo '$target_db.*'"
+      --nsInclude '$old_db.admin_*' --nsFrom '$old_db.*' --nsTo '$target_db.*'"
   unlink "$WORK/src.env" "$WORK/dst.env" 2>/dev/null || true
 
   # 4) 写 staging 的 env（沿用已有令牌；缺了就生成，并保证与旧栈不同）

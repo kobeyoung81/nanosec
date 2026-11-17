@@ -1,0 +1,16 @@
+{
+  "release": "v0.1.0",
+  "superproject": { "tag": "v0.1.0", "commit": "5f7941781cd130325c9c6b01c4bbafb9d1838aef" },
+  "protocol": { "version": "0.46.0", "commit": "c6e572a2ae71b5fa93d0fd9b5d9c4a6416c3f4fa" },
+  "services": {
+    "nanoagent": { "version": "0.1.0", "commit": "38c82cead881b18954ba1c00f5552c9d0c16cd03", "image": "docker.io/kobeyoung81/nanoagent:0.1.0", "image_digest": "sha256:b212477de56dfe8ff2700d1e67aa998b1562e1149ae53fd5488de94ff547df63", "artifact_digest": "sha256:c0055df89f5192bd2f521aab3a3999419b5ae95de47350a21b89526c7b5bd4cb" },
+    "nanoadmin": { "version": "0.1.0", "commit": "1caaf37ae6eefdbc653378b3751c866de3a3dca4", "image": "docker.io/kobeyoung81/nanoadmin:0.1.0", "image_digest": "sha256:c97b09f4f8679568067314badc4ff1873ab6a92f8699ce49224160c7ad290a46", "artifact_digest": "sha256:492e377d7963f1d0f9962abb22237f99c4df9dd6a25b84c09b3b6a66cdba086c" },
+    "nanoartifacts": { "version": "0.1.0", "commit": "26faa3549be756bb2941fbb3bafeb330bd4bd96e", "image": "docker.io/kobeyoung81/nanoartifacts:0.1.0", "image_digest": "sha256:36252abf61663f13664249be8721e0dd9ac7cb822c6934dac51748ad9fc8649d", "artifact_digest": "sha256:ed50d31b63ec29fa65e61308bc10bf5e63ef0f3c9a6f2cd1b4617465a60b7362" },
+    "nanoauth": { "version": "0.1.0", "commit": "26879f940030293bb0d126a7d46c5e4dad42eb0d", "image": "docker.io/kobeyoung81/nanoauth:0.1.0", "image_digest": "sha256:3f419bd96527a37595202d1755030ff87819040d7629c0c9074b1077c3abcfe3", "artifact_digest": "sha256:b22273a4fdd2e4e4f38e4536c714371fd25ec7f8d129136bf291015b29d2f121" },
+    "nanobus": { "version": "0.1.0", "commit": "275bc1e94f7b440ca0bc0abd48f24ffeb006da4f", "image": "docker.io/kobeyoung81/nanobus:0.1.0", "image_digest": "sha256:75cb48c89137cc52844438d75b0c6bce7b8eee537c6b6078d688adeb06565df2", "artifact_digest": "sha256:af9c405940c8619884bf4ecbd12f1aa9f70cd6a5904c6866f7531b6d148772b1" },
+    "nanogateway": { "version": "0.1.0", "commit": "0df400ac8e78f4df8021969536af9bc97a4e163c", "image": "docker.io/kobeyoung81/nanogateway:0.1.0", "image_digest": "sha256:1d73f9a1f5846557f17001eff54eb5539f0ba985f273d285fcd30e6f4913db76", "artifact_digest": "sha256:16e9f6bc38a2d3b79dec8515c6579bfd27992a6a71aa353f467b20204e257570" },
+    "nanoportal": { "version": "0.1.0", "commit": "d158ce1b406e497cd9792d4f44e2791c3fbde5d8", "image": "docker.io/kobeyoung81/nanoportal:0.1.0", "image_digest": "sha256:7ab7bf1b3a561f72fe7d989cb8fa0a892112948dad25fc21b0a5de370b326907", "artifact_digest": "sha256:ad99638a70b97295eb2da112b4efdb1408bcf31dc2941709f4ee7e74674c2387" },
+    "nanoprovisioner": { "version": "0.1.0", "commit": "7fb97d8898e3c6009ae0a4f36f2ea8d254a36ed7", "image": "docker.io/kobeyoung81/nanoprovisioner:0.1.0", "image_digest": "sha256:333749eb9b6599e54781a6304426550db685e1f476cbe5c025cbc9ba27f8cfe1", "artifact_digest": "sha256:55fdb778597a43315bf9e11a0b136f961ffff2fe194c057705e08363d533e2f2" },
+    "nanoworkspace": { "version": "0.1.0", "commit": "50d8e810a02700fb505e927cb197733c1616cf72", "image": "docker.io/kobeyoung81/nanoworkspace:0.1.0", "image_digest": "sha256:2dd5099197d03193903cab0a7b51f7097e966f088a6a9e63e615206fb512b908", "artifact_digest": "sha256:312f97d6c45d5a6b069178ad01ef1d35df28220fc3a985669d4084f7b513db1d" }
+  }
+}

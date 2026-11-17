@@ -9,8 +9,9 @@
 #   services  tag every service. A service with no commits since its last tag
 #             keeps that tag; a changed one must be given its new version, because
 #             choosing major/minor/patch is a decision, not a script's job.
-#   super     tag the super-repository, after versions.lock exists and check-lock
-#             passes.
+#   super     tag the super-repository after versions.lock is committed and
+#             `check-lock.sh --pre-tag` passes; it also pushes the branch, because
+#             a release whose lock lives only on the tag has no history.
 #   branch    create release/<major.minor> at the highest tag of that line, in the
 #             super-repository and in every service that has one.
 #
@@ -39,6 +40,15 @@ run() {
   if [ "$apply" -eq 1 ]; then say "  \$ $*"; "$@"; else say "  would run: $*"; fi
 }
 die() { echo "tag-release: $*" >&2; exit 1; }
+
+# `git tag -a` needs a committer identity. A submodule does not inherit the
+# super-repository's local config, and a Jenkins container's global config lives
+# on a writable layer, so say what is missing instead of passing git's message on.
+require_identity() {
+  git -C "$1" var GIT_COMMITTER_IDENT >/dev/null 2>&1 && return 0
+  die "$1 has no git identity; set GIT_AUTHOR_NAME/GIT_AUTHOR_EMAIL (or run \
+  git config --global user.name/user.email) before tagging"
+}
 
 semver_gt() { # semver_gt A B -> A > B ?
   [ "$1" != "$2" ] && [ "$(printf '%s\n%s\n' "$1" "$2" | sort -V | tail -1)" = "$1" ]
@@ -87,6 +97,7 @@ case "$mode" in
     for p in "${plan[@]}"; do
       read -r svc version kind <<<"$p"
       [ "$kind" = new ] || continue
+      require_identity "$svc"
       run git -C "$svc" tag -a "v$version" -m "$svc v$version"
       run git -C "$svc" push origin "v$version"
     done
@@ -96,12 +107,19 @@ case "$mode" in
 
   super)
     release=$target
-    [ -f versions.lock ] || die "versions.lock is missing: render it once the images exist"
-    locked=$(jq -r '.release' versions.lock)
+    [ -f versions.lock ] || die "versions.lock is missing: run render-lock.sh first"
+    locked=$(jq -r '.superproject.tag // .release' versions.lock)
     [ "$locked" = "$release" ] || die "versions.lock says $locked, not $release"
-    ./scripts/release/check-lock.sh || die "check-lock failed; fix the lock before tagging"
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    [ "$branch" = "master" ] || die "tag a release from master (HEAD is $branch)"
     [ -z "$(git tag -l "$release")" ] || die "tag $release already exists"
+    # --pre-tag: HEAD is not tagged yet; that is exactly what this step creates.
+    ./scripts/release/check-lock.sh --pre-tag || die "check-lock --pre-tag failed; fix the lock before tagging"
+    require_identity .
     run git tag -a "$release" -m "NanoSec $release"
+    # The lock commit has to be on the branch as well as on the tag: a release
+    # that exists only as a tag leaves master without its own history.
+    run git push origin HEAD:master
     run git push origin "$release"
     ;;
 

@@ -42,6 +42,17 @@ for svc in "${SERVICES[@]}" nanoprotocol; do
   fi
 done
 
+echo "==> git identity (tagging needs one)"
+if git var GIT_COMMITTER_IDENT >/dev/null 2>&1; then ok "super-repository has an identity"; else bad "super-repository has no git identity: set GIT_AUTHOR_NAME/GIT_AUTHOR_EMAIL or git config --global user.name/user.email"; fi
+for svc in "${SERVICES[@]}"; do
+  [ -d "$svc" ] || continue
+  if git -C "$svc" var GIT_COMMITTER_IDENT >/dev/null 2>&1; then
+    ok "$svc has an identity"
+  else
+    bad "$svc has no git identity (a submodule does not inherit the super-repository's local config)"
+  fi
+done
+
 echo "==> submodules pinned to what is checked out"
 # `git submodule status` prints " <sha> <path> (<ref>)", with a leading +, - or U
 # when the checkout is not at the gitlink; read the sha first and strip the mark.

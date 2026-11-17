@@ -27,9 +27,16 @@ semver_of() {
   printf '%s' "${tag#v}"
 }
 
-super_tag=$(git describe --tags --exact-match HEAD 2>/dev/null) ||
-  err "the super-repository is not exactly on a tag; tag it before rendering the lock"
-[ "$super_tag" = "$release" ] || err "HEAD is $super_tag, not $release"
+# The lock is written *before* the super-repository is tagged: the tag has to
+# point at the commit that contains the lock, so requiring the tag here made the
+# two steps each wait for the other. What must hold instead is that this lock
+# describes a committed tree and that no release has claimed the name yet.
+if git rev-parse -q --verify "refs/tags/$release" >/dev/null; then
+  err "tag $release already exists; a released lock cannot be regenerated"
+fi
+dirty=$(git status --porcelain | grep -v '^\(..\)\? versions\.lock$' || true)
+[ -z "$dirty" ] || err "the working tree must be clean apart from versions.lock:
+$dirty"
 
 protocol_version=$(semver_of nanoprotocol)
 protocol_commit=$(git -C nanoprotocol rev-parse HEAD)
@@ -40,7 +47,9 @@ trap 'rm -f "$tmp"' EXIT
 {
   printf '{\n'
   printf '  "release": "%s",\n' "$release"
-  printf '  "superproject": { "tag": "%s", "commit": "%s" },\n' "$release" "$(git rev-parse HEAD)"
+  # No commit here on purpose: a file cannot record the hash of the commit that
+  # contains it. The tag is the anchor; `git rev-parse <tag>` recovers the rest.
+  printf '  "superproject": { "tag": "%s" },\n' "$release"
   printf '  "protocol": { "version": "%s", "commit": "%s" },\n' "$protocol_version" "$protocol_commit"
   printf '  "services": {\n'
 } > "$tmp"

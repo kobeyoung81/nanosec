@@ -5,13 +5,24 @@
 # recomputes every artifact digest from the local images and checks their OCI
 # labels, which is the check a promotion runs: the image behind a tag must be the
 # build the lock describes.
+#
+# With --pre-tag it tolerates an untagged HEAD: that is the moment between
+# committing the lock and creating the release tag, and `tag-release.sh super`
+# validates there. If HEAD already carries a tag, it is still compared.
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
 cd "$root"
 
 want_artifacts=0
-[ "${1:-}" = "--artifacts" ] && want_artifacts=1
+pre_tag=0
+for arg in "$@"; do
+  case "$arg" in
+    --artifacts) want_artifacts=1 ;;
+    --pre-tag)   pre_tag=1 ;;
+    *) echo "check-lock: unknown argument $arg" >&2; exit 2 ;;
+  esac
+done
 
 [ -f versions.lock ] || { echo "check-lock: versions.lock is missing" >&2; exit 1; }
 command -v jq >/dev/null || { echo "check-lock: jq is required" >&2; exit 1; }
@@ -23,10 +34,20 @@ bad() { printf '  FAIL %-13s %s\n' "$1" "$2" >&2; fail=1; }
 release=$(jq -r '.release' versions.lock)
 echo "release $release"
 
-# 1. the super-repository is what the lock says
-commit=$(git rev-parse HEAD)
-locked_super=$(jq -r '.superproject.commit' versions.lock)
-[ "$commit" = "$locked_super" ] && note super "$commit" || bad super "lock says $locked_super, checkout is $commit"
+# 1. the super-repository is the release the lock names.
+#
+# The lock deliberately records no commit: a file cannot contain the hash of the
+# commit that contains it, so comparing hashes could never pass from a tag
+# checkout. The tag is the anchor; `git rev-parse <tag>` recovers the commit.
+locked_tag=$(jq -r '.superproject.tag // .release' versions.lock)
+head_tag=$(git describe --tags --exact-match HEAD 2>/dev/null || true)
+if [ "$head_tag" = "$locked_tag" ]; then
+  note super "$locked_tag"
+elif [ "$pre_tag" -eq 1 ] && [ -z "$head_tag" ]; then
+  note super "pre-tag (HEAD untagged)"
+else
+  bad super "lock says $locked_tag, checkout is ${head_tag:-untagged}"
+fi
 
 # 2. every service is the locked commit, and that commit is the gitlink
 while read -r svc; do
@@ -43,7 +64,11 @@ done < <(jq -r '.services | keys[]' versions.lock)
 # 3. the protocol version the lock names is the one every consumer requires
 proto=$(jq -r '.protocol.version' versions.lock)
 # The protocol module itself matches the name; only its consumers require it.
-consumers=$(grep -l 'gitee.com/kobeyoung81/nanoprotocol v' */go.mod | cut -d/ -f1 | sort)
+# A tree without go.mod files (a scratch checkout, an offline bundle) has no
+# consumers to compare; that is not a failure. grep exits nonzero either way, so
+# the pipeline must not take the script down with it.
+consumers=$(grep -l 'gitee.com/kobeyoung81/nanoprotocol v' */go.mod 2>/dev/null | cut -d/ -f1 | sort || true)
+[ -n "$consumers" ] || note protocol "no consumers in this tree"
 for mod in $consumers; do
   required=$(sed -n 's/.*gitee.com\/kobeyoung81\/nanoprotocol \(v[0-9][0-9A-Za-z.+-]*\).*/\1/p' "$mod/go.mod" | head -1)
   if [ "$required" = "v$proto" ]; then

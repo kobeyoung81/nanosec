@@ -109,7 +109,7 @@ both Go and `jq` read it without a Jenkins plugin.
 ```json
 {
   "release": "v0.2.0",
-  "superproject": { "tag": "v0.2.0", "commit": "…" },
+  "superproject": { "tag": "v0.2.0" },
   "protocol":     { "version": "0.46.0", "commit": "…" },
   "services": {
     "nanobus": {
@@ -123,10 +123,20 @@ both Go and `jq` read it without a Jenkins plugin.
 }
 ```
 
-`check-lock.sh` (P1) fails the release when: a submodule is not exactly on a tag,
-`lock.commit` differs from the gitlink, a service's `nanoprotocol` requirement
-differs from `protocol.version`, or an `artifact_digest` differs between the dev
-build and the rebuild from the tag.
+`superproject` deliberately carries **no commit**: a file cannot record the hash of
+the commit that contains it. The lock is written before the release tag exists (the
+tag has to point at the commit that carries the lock), so recording "the commit I was
+rendered on" would always name the previous commit, and every check from a tag
+checkout would fail. The tag is the anchor; `git rev-parse v0.2.0` recovers the
+commit. Locks written before this decision still carry the field; `check-lock.sh`
+ignores it.
+
+`check-lock.sh` fails the release when: the checkout is not the release the lock
+names (compared by **tag**; `--pre-tag` tolerates an untagged HEAD, which is the
+moment between committing the lock and creating the tag), a submodule is not on the
+locked commit or differs from the gitlink, a service's `nanoprotocol` requirement
+differs from `protocol.version`, or — with `--artifacts` — the image label or the
+artifact digest differs from the lock.
 
 ## 6 Release flow
 
@@ -134,8 +144,12 @@ build and the rebuild from the tag.
    `<version>` **and** `dev-<sha>`.
 2. **Protocol** (only when it changed): `scripts/bump-protocol.sh vX.Y.Z`. It must
    update every consumer — seven modules require the protocol, not four.
-3. **Super-repository**: move the submodule pointers, `render-lock.sh`,
-   `check-lock.sh`, commit, tag.
+3. **Super-repository**, on `master` and in this order: move the submodule
+   pointers → `render-lock.sh <release>` (it refuses if the release tag already
+   exists, or if anything but `versions.lock` is uncommitted) → commit the lock →
+   `tag-release.sh super <release>` (it runs `check-lock.sh --pre-tag` first) →
+   push **the branch and the tag**. A release whose lock lives only on a tag leaves
+   `master` without the history of what shipped.
 4. **Deploy**: `compose up -d --no-build`. Because a release tag is never reused,
    the init containers' image reference changes and they run again — **a reused tag
    is a release whose migrations never ran**. Verify both init containers exited 0.
@@ -178,18 +192,21 @@ In place (2026-11-17):
 - Compose takes `${SERVICE_VERSION}` per image (default `nanosec` for local work) and
   passes `VERSION`/`COMMIT`/`BUILD_DATE` as build args; the k8s and swarm manifests
   carry `${SERVICE_VERSION}` tokens and are rendered from a lock.
-- `scripts/release/`: `render-lock.sh`, `check-lock.sh` (with `--artifacts`),
-  `artifact-digest.sh`, `render-manifests.sh`.
+- `scripts/release/`: `render-lock.sh`, `check-lock.sh` (`--artifacts`,
+  `--pre-tag`), `artifact-digest.sh`, `render-manifests.sh`.
 - `scripts/bump-protocol.sh` updates all six consumers of `nanoprotocol` and every
   consumer now requires the same protocol version.
 
 Also in place: `preflight.sh` (clean trees, pushed, submodules at their gitlinks,
-one protocol version, no floating tags, `-trimpath` and labels present) and
-`tag-release.sh` (`services` / `super` / `branch` modes, dry run unless `--apply`).
+git identity present, one protocol version, no floating tags, `-trimpath` and labels
+present) and `tag-release.sh` (`services` / `super` / `branch` modes, dry run unless
+`--apply`; `super` validates with `check-lock.sh --pre-tag` and pushes the branch as
+well as the tag).
 
-Not in place yet: the `release/0.x` branches themselves (the script creates them
-when a line needs a patch), the Jenkins jobs that drive a release, and the first
-real release (tagging, pushing images to Docker Hub, rendering the first lock).
+First release is done: `v0.1.0` (super-repository and all nine services), images on
+Docker Hub, `versions.lock` committed to `master`. Still open: the `release/0.x`
+branches (created when a line needs a patch, by `tag-release.sh branch`), and the
+Jenkins jobs that drive a release end to end.
 
 ## 10 The commands
 
@@ -208,13 +225,18 @@ scripts/release/tag-release.sh services v0.1.0 ... --apply
 # 3. build from those tags and push <version> and dev-<sha> to Docker Hub
 #    (Jenkins, or by hand), then:
 
-# 4. write and validate the lock
+# 4. write the lock, commit it, and only then tag the super-repository. The tag
+#    must point at the commit that carries the lock, so these cannot be reordered.
 scripts/release/render-lock.sh v0.1.0
-scripts/release/check-lock.sh --artifacts
+git add versions.lock && git commit -m "release: v0.1.0"
+scripts/release/check-lock.sh --pre-tag
 
-# 5. tag the super-repository and render the manifests
+# 5. tag (it re-runs check-lock --pre-tag) and push the branch and the tag
 scripts/release/tag-release.sh super v0.1.0 --apply
 scripts/release/render-manifests.sh /tmp/nanosec-manifests
+
+# 6. afterwards, from a tag checkout (this is what Stg.NanoSec runs)
+scripts/release/check-lock.sh --artifacts
 
 # a patch release on an existing line
 scripts/release/tag-release.sh branch 0.1          # once, when 0.1 needs a patch

@@ -119,7 +119,11 @@ docker compose up -d
 `admin-init` runs first — its manifests, then `config seed`, `permissions seed`,
 `agent-types seed`, `prompts seed`, `skills seed`, `mcp seed` — because `bus-init`
 and the running services read configuration from it. `bus-init` applies the bus's own
-manifests. Then `nanobus`, `nanoadmin`, `nanoauth`, `nanogateway`, `nanoportal`,
+manifests. The catalogue enforces one entry per `(scope, owner, name)`, and `mcp seed`
+treats a platform row at the same endpoint as already present, so seeding is
+idempotent even when the deployment configured that server by hand under another
+name. **Upgrading a database that already holds two rows for one name will fail the
+migration (and therefore `admin-init`); remove the duplicate first.** Then `nanobus`, `nanoadmin`, `nanoauth`, `nanogateway`, `nanoportal`,
 `nanorunner` and `nanoartifacts` start. `nanoauth` generates its JWT
 keypair on first boot and writes it through `nanoadmin`.
 

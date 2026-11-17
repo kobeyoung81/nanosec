@@ -1,0 +1,79 @@
+name: Bug report
+description: Something does not work the way the documentation says it does
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Please do not include tokens, database URIs, API keys
+        or customer data — redact them as `***`.
+
+        谢谢。请勿贴出令牌、数据库连接串、API Key 或客户数据。
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: The behaviour you saw, and what you expected instead.
+      placeholder: |
+        I sent a message on the web channel and the answer never appeared.
+        I expected it within a few seconds, as it does on the CLI channel.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. docker compose up -d
+        2. register as the first user
+        3. send "hello" from the Chat page
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The tag, or the output of `git rev-parse --short HEAD` in the super-repo.
+      placeholder: 5ed8944
+    validations:
+      required: true
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Which part
+      options:
+        - bus (messages, SSE, tunnels)
+        - gateway (web / WeCom / Feishu / WeChat KF / CLI)
+        - agent container (tools, skills, sessions)
+        - console (portal UI)
+        - admin (config, catalogues, audit)
+        - auth (login, tokens, channels)
+        - provisioner (containers, runner)
+        - workspace (files, git panel)
+        - work library (artifacts, spaces, quotas)
+        - deployment (compose / swarm / kubernetes)
+        - documentation
+    validations:
+      required: true
+
+  - type: input
+    id: deployment
+    attributes:
+      label: How it runs
+      description: Docker Compose, Swarm, Kubernetes, or binaries from the workspace.
+      placeholder: Docker Compose on Ubuntu 24.04, single host
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: Service logs around the failure. Redact secrets.
+      render: shell
+    validations:
+      required: false

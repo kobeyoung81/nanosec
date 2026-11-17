@@ -1,0 +1,55 @@
+name: Feature request
+description: Suggest a capability the platform should have
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing, check `docs/PRD.md` — it lists what is deliberately out of scope.
+
+        提之前先看 `docs/PRD.md`，那里写了刻意不做的事。
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you are trying to do, and where the platform gets in the way.
+      placeholder: |
+        I want a second person to share one agent without seeing each other's
+        conversations, and today a container belongs to exactly one account.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you have in mind
+      description: A rough shape is enough — API, UI, configuration, or all three.
+    validations:
+      required: false
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you tried instead
+      description: Workarounds, or other tools that solve it.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part
+      options:
+        - channels (web / WeCom / Feishu / WeChat KF / CLI / Mini Program)
+        - agents (roles, routing, tools, skills)
+        - console (portal UI)
+        - admin (config, catalogues, audit)
+        - auth (accounts, tokens, channels)
+        - provisioner (containers, runner, scaling)
+        - workspace (files, git panel)
+        - work library (artifacts, spaces, quotas)
+        - deployment and operations
+        - documentation
+    validations:
+      required: true

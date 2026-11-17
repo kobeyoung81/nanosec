@@ -183,11 +183,42 @@ In place (2026-11-17):
 - `scripts/bump-protocol.sh` updates all six consumers of `nanoprotocol` and every
   consumer now requires the same protocol version.
 
-Not in place yet (P2): `tag-release.sh` (the ordered tagging of twelve
-repositories), the `release/0.x` branches themselves, a rewritten offline packager
-(`scripts/release/build-release.sh` still describes the pre-P1 stack: `:latest`, six
-images, database `nanobus`, ports 18080/28080), and the Jenkins jobs that drive all
-of it.
+Also in place: `preflight.sh` (clean trees, pushed, submodules at their gitlinks,
+one protocol version, no floating tags, `-trimpath` and labels present) and
+`tag-release.sh` (`services` / `super` / `branch` modes, dry run unless `--apply`).
+
+Not in place yet: the `release/0.x` branches themselves (the script creates them
+when a line needs a patch), the Jenkins jobs that drive a release, and the first
+real release (tagging, pushing images to Docker Hub, rendering the first lock).
+
+## 10 The commands
+
+```sh
+# 1. nothing may be dirty, unpushed or off its gitlink
+scripts/release/preflight.sh
+
+# 2. tag the services. A service with no commits since its last tag is left on
+#    that tag; a changed one needs its version said out loud. Dry run first.
+scripts/release/tag-release.sh services v0.1.0 \
+  --nanoagent=0.1.0 --nanoadmin=0.1.0 --nanoartifacts=0.1.0 --nanoauth=0.1.0 \
+  --nanobus=0.1.0 --nanogateway=0.1.0 --nanoportal=0.1.0 \
+  --nanoprovisioner=0.1.0 --nanoworkspace=0.1.0
+scripts/release/tag-release.sh services v0.1.0 ... --apply
+
+# 3. build from those tags and push <version> and dev-<sha> to Docker Hub
+#    (Jenkins, or by hand), then:
+
+# 4. write and validate the lock
+scripts/release/render-lock.sh v0.1.0
+scripts/release/check-lock.sh --artifacts
+
+# 5. tag the super-repository and render the manifests
+scripts/release/tag-release.sh super v0.1.0 --apply
+scripts/release/render-manifests.sh /tmp/nanosec-manifests
+
+# a patch release on an existing line
+scripts/release/tag-release.sh branch 0.1          # once, when 0.1 needs a patch
+```
 
 Local builds keep the `nanosec` tag: `${SERVICE_VERSION:-nanosec}` is the compose
 default, so the image tag and the `version` label agree locally without anyone

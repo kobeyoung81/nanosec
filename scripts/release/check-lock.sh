@@ -2,8 +2,9 @@
 # Usage: check-lock.sh [--artifacts]
 #
 # Validates versions.lock against the checkout. With --artifacts it also
-# recomputes every artifact digest from the local images, which is the check a
-# promotion runs: the release image must be the build the dev image was.
+# recomputes every artifact digest from the local images and checks their OCI
+# labels, which is the check a promotion runs: the image behind a tag must be the
+# build the lock describes.
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -66,6 +67,18 @@ if [ "$want_artifacts" -eq 1 ]; then
       note "$svc" "artifact ${actual:0:19}…"
     else
       bad "$svc" "artifact $actual, lock says $locked"
+    fi
+
+    # The tag is only trustworthy when the image says the same thing: a push that
+    # overwrote a tag with a different build would otherwise pass on the digest.
+    want_version=$(jq -r --arg s "$svc" '.services[$s].version' versions.lock)
+    want_commit=$(jq -r --arg s "$svc" '.services[$s].commit' versions.lock)
+    label_version=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.version"}}' 2>/dev/null || true)
+    label_revision=$(docker image inspect "$image" --format '{{index .Config.Labels "org.opencontainers.image.revision"}}' 2>/dev/null || true)
+    if [ "$label_version" = "$want_version" ] && [ "$label_revision" = "$want_commit" ]; then
+      note "$svc" "labels $label_version/$label_revision"
+    else
+      bad "$svc" "labels ${label_version:-none}/${label_revision:-none}, lock says $want_version/$want_commit"
     fi
   done < <(jq -r '.services | keys[]' versions.lock)
 fi

@@ -52,8 +52,13 @@ spec:
                   key: artifact-session-secret
             - name: NANOARTIFACTS_COOKIE_PATH
               value: "/"
-            - name: NANOSEC_BUS_URL
-              value: "http://nanobus:9000"
+            # Identity has two owners: the portal keeps the agent rows, nanoauth
+            # keeps the accounts. Asking the bus here answered "unknown agent" to
+            # every publish once those surfaces moved.
+            - name: NANOSEC_PORTAL_URL
+              value: "http://nanoportal:80"
+            - name: NANOAUTH_INTERNAL_URL
+              value: "http://nanoauth:8081"
             - name: NANOSEC_BUS_INTERNAL_TOKEN
               valueFrom:
                 secretKeyRef:

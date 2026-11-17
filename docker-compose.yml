@@ -312,14 +312,20 @@ services:
       NANOARTIFACTS_COOKIE_PATH: ${NANOARTIFACTS_COOKIE_PATH:-/}
       # Per-user storage ceiling, counted after content dedupe.
       NANOARTIFACTS_QUOTA_BYTES: ${NANOARTIFACTS_QUOTA_BYTES:-2147483648}
-      NANOSEC_BUS_URL: http://nanobus:9000
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Identity has two owners, and this service asks each of them directly:
+      # the portal keeps the agent rows (agent -> owner), nanoauth keeps the
+      # accounts (display names, address lookups). Neither is a bus call: the
+      # bus stopped serving those surfaces, and asking it answered "unknown
+      # agent" to every publish.
+      NANOSEC_PORTAL_URL: http://nanoportal:80
+      NANOAUTH_INTERNAL_URL: http://nanoauth:8081
       # The same keys the portal validates against: identity is nanoauth's, not
       # a local user table.
-      # nanoauth's key set, read directly: the bus no longer proxies identity.
       NANOAUTH_JWKS_URL: http://nanoauth:8081/auth/v1/.well-known/jwks
     depends_on:
-      - nanobus
+      - nanoportal
+      - nanoauth
 
   # The admin domain: agent-type/model/capability/prompt/permission-key/audit
   # and configuration catalogues. Owns the admin_ prefix; the bus keeps only

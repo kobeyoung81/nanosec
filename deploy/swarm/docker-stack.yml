@@ -32,7 +32,6 @@
 services:
   nanobus:
     image: kobeyoung81/nanobus:${NANOBUS_VERSION}
-    imagePullPolicy: IfNotPresent
     environment:
       NANOSEC_BUS_DATABASE_URI: ${NANOSEC_BUS_DATABASE_URI:?export NANOSEC_BUS_DATABASE_URI first}
       NANOSEC_BUS_NANOAUTH_BASE_URL: http://nanoauth:8081
@@ -54,7 +53,6 @@ services:
 
   nanoauth:
     image: kobeyoung81/nanoauth:${NANOAUTH_VERSION}
-    imagePullPolicy: IfNotPresent
     environment:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?export NANOSEC_BUS_INTERNAL_TOKEN first}
     networks: [nanosec]
@@ -74,7 +72,6 @@ services:
 
   nanogateway:
     image: kobeyoung81/nanogateway:${NANOGATEWAY_VERSION}
-    imagePullPolicy: IfNotPresent
     command: ["--bus-url", "ws://nanobus:9000"]
     environment:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?export NANOSEC_BUS_INTERNAL_TOKEN first}
@@ -91,7 +88,6 @@ services:
 
   nanorunner:
     image: kobeyoung81/nanoprovisioner:${NANOPROVISIONER_VERSION}
-    imagePullPolicy: IfNotPresent
     command: ["--bus-url", "ws://nanobus:9000"]
     environment:
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?export NANOSEC_BUS_INTERNAL_TOKEN first}
@@ -108,7 +104,6 @@ services:
 
   nanoportal:
     image: kobeyoung81/nanoportal:${NANOPORTAL_VERSION}
-    imagePullPolicy: IfNotPresent
     environment:
       NANO_PORTAL_BUS_URL: http://nanobus:9000
       NANO_PORTAL_HYPERVISOR_URL: http://nanosec:9090

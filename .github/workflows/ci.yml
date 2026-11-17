@@ -1,0 +1,105 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build, vet, test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - nanoprotocol
+          - nanoauth
+          - nanobus
+          - nanogateway
+          - nanoprovisioner
+          - nanoagent
+          - nanoartifacts
+          - nanoadmin
+          - nanoportal
+          - nanoworkspace
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache-dependency-path: '*/go.sum'
+      - name: build
+        working-directory: ${{ matrix.module }}
+        run: go build ./...
+      - name: vet
+        working-directory: ${{ matrix.module }}
+        run: go vet ./...
+      - name: test
+        working-directory: ${{ matrix.module }}
+        run: go test ./...
+
+  license:
+    name: dependency licenses
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module:
+          - nanoprotocol
+          - nanoauth
+          - nanobus
+          - nanogateway
+          - nanoprovisioner
+          - nanoagent
+          - nanoartifacts
+          - nanoadmin
+          - nanoportal
+          - nanoworkspace
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.x'
+          cache-dependency-path: '*/go.sum'
+      - name: check allowed licenses
+        working-directory: ${{ matrix.module }}
+        env:
+          GOWORK: 'off'
+        run: |
+          go run github.com/google/go-licenses@latest check ./... \
+            --allowed_licenses=MIT,Apache-2.0,BSD-2-Clause,BSD-3-Clause,ISC,MPL-2.0,Unlicense,0BSD
+
+  links:
+    name: readme links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: every relative link and asset exists
+        run: |
+          python3 - <<'PY'
+          import pathlib, re, sys
+
+          bad = []
+          for name in ("README.md", "README.zh-CN.md", "docs/README.md", "CONTRIBUTING.md"):
+              page = pathlib.Path(name)
+              text = page.read_text(encoding="utf-8")
+              for m in re.finditer(r'(?:src|href)="([^"]+)"|\]\(([^)#]+)\)', text):
+                  path = m.group(1) or m.group(2)
+                  if path.startswith(("http://", "https://", "mailto:", "#")):
+                      continue
+                  local = path[2:] if path.startswith("./") else path
+                  if not (page.parent / local).exists():
+                      bad.append(f"{name}: {path}")
+          for line in bad:
+              print(f"::error::missing relative target {line}")
+          sys.exit(1 if bad else 0)
+          PY

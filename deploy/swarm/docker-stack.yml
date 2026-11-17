@@ -10,7 +10,7 @@
 # module migrates and seeds its own prefix — the bus no longer has a `config`
 # command, and the seeds are the admin module's:
 #   docker run --rm -e NANOSEC_BUS_DATABASE_URI="$NANOSEC_BUS_DATABASE_URI" \
-#     kobeyoung81/nanobus:latest migrate up
+#     kobeyoung81/nanobus:$NANOBUS_VERSION migrate up
 #   docker run --rm -e NANOSEC_ADMIN_MONGO_URI="$NANOSEC_BUS_DATABASE_URI" \
 #     kobeyoung81/nanoadmin:nanosec migrate up
 #   for seed in config permissions agent-types prompts skills mcp; do

@@ -399,9 +399,9 @@ services:
     depends_on:
       - nanobus
 
-  # Builds/tags the nanosec agent image (nanosec:latest) used by nanorunner to
-  # provision per-user agent containers. Not started as part of `up`; build it
-  # with: docker compose build nanosec
+  # Builds/tags the agent image nanorunner provisions per-user containers from
+  # (kobeyoung81/nanoagent:<NANOAGENT_VERSION>, local default `nanosec`). Not
+  # started as part of `up`; build it with: docker compose build nanosec
   nanosec:
     build:
       context: ./nanoagent

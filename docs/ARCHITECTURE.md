@@ -231,9 +231,18 @@ container over one WebSocket, so its failure modes are a queue and a backlog:
   a connection comes or goes, so a forward does not cost a database read;
 - `POST /api/v1/internal/tunnels/drain` refuses new registrations with `503` and
   closes the live connections at the deadline — the rolling-restart switch;
-- a body over **2 MiB** is refused with `413`: base64 inside a WebSocket frame costs a
-  third more bytes and holds the whole body in memory at both ends. Large transfers
-  need a direct path (object storage), which is not built yet;
+- a body at or below **256 KiB** rides inside one JSON frame; anything larger travels
+  as `tunnel_request_body` / `tunnel_response_body` chunks of **256 KiB** (base64 in a
+  frame costs a third more bytes and holds the whole body in memory at both ends, which
+  is why a 5 MB download used to kill the connection). A container advertises
+  `body-stream` in `tunnel_register`, and the relay refuses a large body from a
+  container that does not, with `413` and a message naming the fix;
+- a streamed request has two timeouts instead of one: **60 s for the response head**
+  and **60 s of silence between chunks**. Either side may send `tunnel_cancel`; the
+  container cancels its local HTTP request, so a browser that stops a download does
+  not leave the agent reading a file;
+- the per-file cap is the receiving module's setting (`NANOSEC_WORKSPACE_MAX_FILE_BYTES`,
+  default 2 GiB; `NANOSEC_HYPERVISOR_MAX_FILE_BYTES` in the container), not a frame limit;
 - `nofile` is **65536** in the compose and swarm manifests; Kubernetes has no field
   for it, so the node runtime has to provide it (`deploy/k8s/README.md`).
 

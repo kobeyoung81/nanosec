@@ -107,6 +107,22 @@ the URI when the set has a name.
 > **Security:** the `nanoauth` RSA private key lives in this database
 > (`admin_config`, component `auth`). Restrict access, and treat backups as secrets.
 
+### 3.0 镜像构建前置：NanoAgent Runtime
+
+`nanoagent/Dockerfile` 的服务镜像从 `kobeyoung81/nanoagent-runtime:1` 起构建。
+这个基础镜像由 `nanoagent/runtime-base/Dockerfile` **构建一次**，里面包含
+officecli 及其 .NET 依赖、nvm/Node、Go 和常用 CLI 工具：
+
+```
+docker build -t kobeyoung81/nanoagent-runtime:1 nanoagent/runtime-base
+```
+
+它只在本地保留、不推送镜像仓库；**在 CI 使用的同一个 Docker daemon 上构建**
+（Jenkins 构建时 `FROM` 直接命中）。本地镜像被清理后需要重新执行这条命令，
+否则服务镜像构建会尝试去镜像仓库拉取而失败。officecli 因此不再从 GitHub 下载
+（此前的下载在国内构建机上长期超时/协议错误）。工具链升级时构建 `:2`、把
+`nanoagent/Dockerfile` 指向它，并保留 `:1` 供回退。
+
 ## 3. Docker Compose (single host)
 
 ### Start

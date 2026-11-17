@@ -30,7 +30,8 @@ spec:
     spec:
       containers:
         - name: nanoadmin
-          image: kobeyoung81/nanoadmin:latest
+          image: kobeyoung81/nanoadmin:${NANOADMIN_VERSION}
+          imagePullPolicy: IfNotPresent
           env:
             - name: NANOSEC_ADMIN_MONGO_URI
               valueFrom:

@@ -30,7 +30,8 @@ spec:
     spec:
       containers:
         - name: nanoworkspace
-          image: kobeyoung81/nanoworkspace:latest
+          image: kobeyoung81/nanoworkspace:${NANOWORKSPACE_VERSION}
+          imagePullPolicy: IfNotPresent
           env:
             - name: NANOSEC_BUS_INTERNAL_TOKEN
               valueFrom:

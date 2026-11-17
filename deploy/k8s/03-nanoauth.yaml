@@ -31,7 +31,8 @@ spec:
     spec:
       containers:
         - name: nanoauth
-          image: kobeyoung81/nanoauth:latest
+          image: kobeyoung81/nanoauth:${NANOAUTH_VERSION}
+          imagePullPolicy: IfNotPresent
           env:
             - name: NANOSEC_BUS_INTERNAL_TOKEN
               valueFrom:

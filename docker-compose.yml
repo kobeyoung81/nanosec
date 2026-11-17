@@ -20,7 +20,11 @@ services:
   admin-init:
     build:
       context: ./nanoadmin
-    image: kobeyoung81/nanoadmin:nanosec
+      args:
+        VERSION: ${NANOADMIN_VERSION:-nanosec}
+        COMMIT: ${NANOADMIN_COMMIT:-none}
+        BUILD_DATE: ${NANOADMIN_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoadmin:${NANOADMIN_VERSION:-nanosec}
     entrypoint: ["sh", "-c"]
     command:
       - "for i in $$(seq 1 30); do nanoadmin migrate up && break; echo 'waiting for mongo...'; sleep 2; done; nanoadmin migrate up && nanoadmin config seed && nanoadmin permissions seed && nanoadmin agent-types seed && nanoadmin prompts seed && nanoadmin skills seed && nanoadmin mcp seed && echo 'admin init complete'"
@@ -36,7 +40,11 @@ services:
   bus-init:
     build:
       context: ./nanobus
-    image: kobeyoung81/nanobus:nanosec
+      args:
+        VERSION: ${NANOBUS_VERSION:-nanosec}
+        COMMIT: ${NANOBUS_COMMIT:-none}
+        BUILD_DATE: ${NANOBUS_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanobus:${NANOBUS_VERSION:-nanosec}
     entrypoint: ["sh", "-c"]
     command:
       # `agent-types seed` runs before `prompts seed` on purpose: the prompt
@@ -58,7 +66,11 @@ services:
   nanobus:
     build:
       context: ./nanobus
-    image: kobeyoung81/nanobus:nanosec
+      args:
+        VERSION: ${NANOBUS_VERSION:-nanosec}
+        COMMIT: ${NANOBUS_COMMIT:-none}
+        BUILD_DATE: ${NANOBUS_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanobus:${NANOBUS_VERSION:-nanosec}
     entrypoint: nanobus
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
@@ -100,7 +112,11 @@ services:
   nanoauth:
     build:
       context: ./nanoauth
-    image: kobeyoung81/nanoauth:nanosec
+      args:
+        VERSION: ${NANOAUTH_VERSION:-nanosec}
+        COMMIT: ${NANOAUTH_COMMIT:-none}
+        BUILD_DATE: ${NANOAUTH_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoauth:${NANOAUTH_VERSION:-nanosec}
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
     # connection: the default 1024 soft limit is reached long before the
@@ -127,7 +143,11 @@ services:
   nanorunner:
     build:
       context: ./nanoprovisioner
-    image: kobeyoung81/nanoprovisioner:nanosec
+      args:
+        VERSION: ${NANOPROVISIONER_VERSION:-nanosec}
+        COMMIT: ${NANOPROVISIONER_COMMIT:-none}
+        BUILD_DATE: ${NANOPROVISIONER_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoprovisioner:${NANOPROVISIONER_VERSION:-nanosec}
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
     # connection: the default 1024 soft limit is reached long before the
@@ -186,7 +206,11 @@ services:
   nanoworkspace:
     build:
       context: ./nanoworkspace
-    image: kobeyoung81/nanoworkspace:nanosec
+      args:
+        VERSION: ${NANOWORKSPACE_VERSION:-nanosec}
+        COMMIT: ${NANOWORKSPACE_COMMIT:-none}
+        BUILD_DATE: ${NANOWORKSPACE_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoworkspace:${NANOWORKSPACE_VERSION:-nanosec}
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
     # connection: the default 1024 soft limit is reached long before the
@@ -215,7 +239,11 @@ services:
   nanogateway:
     build:
       context: ./nanogateway
-    image: kobeyoung81/nanogateway:nanosec
+      args:
+        VERSION: ${NANOGATEWAY_VERSION:-nanosec}
+        COMMIT: ${NANOGATEWAY_COMMIT:-none}
+        BUILD_DATE: ${NANOGATEWAY_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanogateway:${NANOGATEWAY_VERSION:-nanosec}
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
     # connection: the default 1024 soft limit is reached long before the
@@ -248,7 +276,11 @@ services:
   nanoportal:
     build:
       context: ./nanoportal
-    image: kobeyoung81/nanoportal:nanosec
+      args:
+        VERSION: ${NANOPORTAL_VERSION:-nanosec}
+        COMMIT: ${NANOPORTAL_COMMIT:-none}
+        BUILD_DATE: ${NANOPORTAL_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoportal:${NANOPORTAL_VERSION:-nanosec}
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
     # connection: the default 1024 soft limit is reached long before the
@@ -285,7 +317,11 @@ services:
   nanoartifacts:
     build:
       context: ./nanoartifacts
-    image: kobeyoung81/nanoartifacts:nanosec
+      args:
+        VERSION: ${NANOARTIFACTS_VERSION:-nanosec}
+        COMMIT: ${NANOARTIFACTS_COMMIT:-none}
+        BUILD_DATE: ${NANOARTIFACTS_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoartifacts:${NANOARTIFACTS_VERSION:-nanosec}
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
     # connection: the default 1024 soft limit is reached long before the
@@ -333,7 +369,11 @@ services:
   nanoadmin:
     build:
       context: ./nanoadmin
-    image: kobeyoung81/nanoadmin:nanosec
+      args:
+        VERSION: ${NANOADMIN_VERSION:-nanosec}
+        COMMIT: ${NANOADMIN_COMMIT:-none}
+        BUILD_DATE: ${NANOADMIN_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoadmin:${NANOADMIN_VERSION:-nanosec}
     restart: unless-stopped
     # One file descriptor per open tunnel, stream subscription and database
     # connection: the default 1024 soft limit is reached long before the
@@ -365,6 +405,10 @@ services:
   nanosec:
     build:
       context: ./nanoagent
-    image: kobeyoung81/nanoagent:nanosec
+      args:
+        VERSION: ${NANOAGENT_VERSION:-nanosec}
+        COMMIT: ${NANOAGENT_COMMIT:-none}
+        BUILD_DATE: ${NANOAGENT_BUILD_DATE:-unknown}
+    image: kobeyoung81/nanoagent:${NANOAGENT_VERSION:-nanosec}
     profiles: ["agent"]
     command: ["version"]

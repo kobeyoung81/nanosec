@@ -34,7 +34,8 @@ spec:
     spec:
       containers:
         - name: nanoartifacts
-          image: kobeyoung81/nanoartifacts:latest
+          image: kobeyoung81/nanoartifacts:${NANOARTIFACTS_VERSION}
+          imagePullPolicy: IfNotPresent
           env:
             # One database, one connection string: the library lives in the same
             # database under the artifacts_ prefix. Derived from the platform URI

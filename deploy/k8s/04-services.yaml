@@ -28,7 +28,8 @@ spec:
     spec:
       containers:
         - name: nanoportal
-          image: kobeyoung81/nanoportal:latest
+          image: kobeyoung81/nanoportal:${NANOPORTAL_VERSION}
+          imagePullPolicy: IfNotPresent
           env:
             - name: NANO_PORTAL_BUS_URL
               value: "http://nanobus:9000"
@@ -72,7 +73,8 @@ spec:
     spec:
       containers:
         - name: nanogateway
-          image: kobeyoung81/nanogateway:latest
+          image: kobeyoung81/nanogateway:${NANOGATEWAY_VERSION}
+          imagePullPolicy: IfNotPresent
           args: ["--bus-url", "ws://nanobus:9000"]
           env:
             - name: NANOSEC_BUS_INTERNAL_TOKEN

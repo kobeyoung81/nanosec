@@ -34,7 +34,10 @@ echo "Tagging nanoprotocol $VERSION..."
 # describe ignores lightweight tags).
 (cd "$REPO_ROOT/nanoprotocol" && git tag -a "$VERSION" -m "$VERSION" && git push origin "$VERSION")
 
-for mod in nanobus nanogateway nanoagent nanoprovisioner; do
+# Every module that requires the protocol. The list used to name four; the
+# admin and workspace modules import it too, and a release that bumps only some
+# consumers leaves the platform on two protocol versions at once.
+for mod in nanobus nanogateway nanoagent nanoprovisioner nanoadmin nanoworkspace; do
   echo "Updating $mod..."
   (
     cd "$REPO_ROOT/$mod" &&

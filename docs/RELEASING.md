@@ -166,10 +166,29 @@ are recreated. Migrations must stay compatible with the previous release (N-1): 
 rollback that only changes code must not need a schema rollback, so destructive
 changes are split into "add" and "remove one release later".
 
-## 9 Not done yet (P1/P2)
+## 9 What is in place, and what is not
 
-The gate is described here and the builds satisfy it; the automation is not written
-yet: `render-lock.sh`, `check-lock.sh`, `tag-release.sh`, the compose version
-variables, the k8s/swarm tag variables, `version` on `/healthz`, and rewriting
-`scripts/release/build-release.sh` (still the pre-P1 offline packager: `:latest`,
-six images, database `nanobus`, ports 18080/28080).
+In place (2026-11-17):
+
+- `-trimpath` in every Dockerfile, OCI labels on every image, and the version
+  stamped into each binary (`main.version`, plus `main.commit`/`main.date` where the
+  binary has them).
+- `/healthz` reports `{"status":"ok","version":…}` on every service, so a container
+  can be asked what it runs without inspecting labels.
+- Compose takes `${SERVICE_VERSION}` per image (default `nanosec` for local work) and
+  passes `VERSION`/`COMMIT`/`BUILD_DATE` as build args; the k8s and swarm manifests
+  carry `${SERVICE_VERSION}` tokens and are rendered from a lock.
+- `scripts/release/`: `render-lock.sh`, `check-lock.sh` (with `--artifacts`),
+  `artifact-digest.sh`, `render-manifests.sh`.
+- `scripts/bump-protocol.sh` updates all six consumers of `nanoprotocol` and every
+  consumer now requires the same protocol version.
+
+Not in place yet (P2): `tag-release.sh` (the ordered tagging of twelve
+repositories), the `release/0.x` branches themselves, a rewritten offline packager
+(`scripts/release/build-release.sh` still describes the pre-P1 stack: `:latest`, six
+images, database `nanobus`, ports 18080/28080), and the Jenkins jobs that drive all
+of it.
+
+Local builds keep the `nanosec` tag: `${SERVICE_VERSION:-nanosec}` is the compose
+default, so the image tag and the `version` label agree locally without anyone
+having to invent a release number.

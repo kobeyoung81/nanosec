@@ -11,7 +11,8 @@ spec:
       restartPolicy: Never
       containers:
         - name: init
-          image: kobeyoung81/nanobus:latest
+          image: kobeyoung81/nanobus:${NANOBUS_VERSION}
+          imagePullPolicy: IfNotPresent
           command: ["sh", "-c"]
           args:
             # Only this module's collections. Configuration, the catalogues and
@@ -54,7 +55,8 @@ spec:
     spec:
       containers:
         - name: nanobus
-          image: kobeyoung81/nanobus:latest
+          image: kobeyoung81/nanobus:${NANOBUS_VERSION}
+          imagePullPolicy: IfNotPresent
           env:
             - name: NANOSEC_BUS_DATABASE_URI
               valueFrom:

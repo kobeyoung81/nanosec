@@ -38,10 +38,13 @@ All targets share the same model:
   requests when the token is unconfigured.
 - **Two one-shot bootstrap containers** run before the services: `admin-init` (its
   manifests and the platform seeds) and `bus-init` (its manifests).
-- **Images**: `docker-compose.yml` builds and tags `kobeyoung81/<service>:nanosec`
-  locally; the swarm and k8s manifests reference `kobeyoung81/<service>:latest`, so
-  those targets need the images available to the cluster (built on the node, or
-  pushed to a registry).
+- **Images**: every service is tagged with its own version. A local build uses
+  `kobeyoung81/<service>:nanosec` (the default when no version variable is set); a
+  release sets `NANO*_VERSION` from `versions.lock` and pushes
+  `docker.io/kobeyoung81/<service>:<version>` to Docker Hub (public, so a cluster
+  needs no pull secret). The k8s and swarm manifests carry `${..._VERSION}` tokens:
+  render them with `scripts/release/render-manifests.sh` before applying. See
+  `docs/RELEASING.md`.
 - **No JWT key provisioning** — `nanoauth` generates its RS256 keypair on first boot
   and stores it in the platform configuration (`admin_config`, component `auth`,
   keys `jwtPrivateKey`/`jwtPublicKey`), so no key files or secrets are mounted.

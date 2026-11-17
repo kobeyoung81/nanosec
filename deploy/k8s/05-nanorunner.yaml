@@ -22,7 +22,8 @@ spec:
       serviceAccountName: nanorunner
       containers:
         - name: nanorunner
-          image: kobeyoung81/nanorunner:latest
+          image: kobeyoung81/nanoprovisioner:${NANOPROVISIONER_VERSION}
+          imagePullPolicy: IfNotPresent
           args: ["--bus-url", "ws://nanobus:9000"]
           env:
             - name: NANOSEC_BUS_INTERNAL_TOKEN

@@ -3,9 +3,16 @@
 Applied in file-name order; the two `Job`s run once (`nanobus-init`, then
 `nanoadmin-init`) and every other file is a Service + Deployment.
 
+The manifests carry `${SERVICE_VERSION}` tokens instead of image tags, so the
+versions come from a release lock rather than from whoever typed `kubectl`:
+
 ```sh
-kubectl apply -f deploy/k8s/
+./scripts/release/render-manifests.sh /tmp/nanosec-k8s versions.lock
+kubectl apply -f /tmp/nanosec-k8s/k8s/
 ```
+
+Applying the directory directly fails loudly (`ImagePullBackOff` on a literal
+`${...}` tag) rather than deploying an unintended version.
 
 - **Secrets first.** `02-secrets.yaml` holds the database URI, the shared internal
   token and the work library's cookie key. Replace every `change-me` before applying;

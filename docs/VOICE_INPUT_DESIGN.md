@@ -177,7 +177,7 @@ bus 对内网**不做任何鉴权**（它信任 portal 注入的 `user_id`），
 | reason | 含义 |
 |---|---|
 | `commit_done` | 正常：浏览器松手 → commit → 最后一句话完成 → 收尾 |
-| `commit_idle` | 正常：松手时上游已把全部音频转完，没有待完成的内容 |
+| `commit_idle` | 正常：松手时上游已把全部音频转完（或把这次 commit 判为空缓冲，常见于"停顿之后才松手"），没有待完成的内容 |
 | `commit_error` | 松手后上游抱怨了一句（如空缓冲），已降级为 warning 并正常收尾 |
 | `client_close` | 浏览器关掉了连接。**一次听写出现多条 `client_close` + 新连接，就是前端在重连** |
 | `upstream_error` | 录音中上游报错（真正的失败，前端会续接） |

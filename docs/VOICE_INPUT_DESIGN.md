@@ -44,7 +44,14 @@ Composer 的尾部按钮在草稿为空时是**麦克风**，占位文案是"在
 3. 浏览器每 ~170 ms 发一个二进制帧；bus 把它 base64 成 `input_audio_buffer.append`。
 4. 松手时浏览器发 `{"type":"commit"}`，bus 转成 `input_audio_buffer.commit`。
 5. 上游回 `…transcription.delta` / `…transcription.completed`；bus **归一化**成 `{type:delta|done|error}` 再给浏览器（同时接受 GA 与旧 beta 事件名，认不出的直接丢）。
-6. 收到 `done` 后浏览器发润色请求，然后关会话。
+6. 浏览器收到"收尾用的那个" `done` 后发润色请求，然后关会话。
+
+**会话边界由浏览器决定，不由上游的完成事件决定（2026-11-18 修正）**
+
+- 上游可能自带 VAD：它在听到停顿时**自己** commit 并回 `…transcription.completed`。那是**一个句段的结束**，不是整次听写结束。
+- 因此 bus 中继只在**浏览器已经发过 `commit`** 之后收到的第一个 `done` 上结束会话（`nanobus/internal/server/rest_voice.go` 的 `handleVoiceWS`）；浏览器还在录音时，`done` 只转发、连接继续。
+- 这条以前写反了：中继收到任何 `done` 都 `return`，于是每停顿一次就掐断一次连接，前端按 `MAX_RECONNECTS = 5` 重连，重连用尽后进入兜底层与润色——表现正是"说几秒就断、断几次后开始高精度识别"。
+- `commitIntervalMs > 0` 时 bus 会周期性 commit，同样会制造 `done`；它们也只是句段边界（中继只把**浏览器发来的** commit 当成收尾信号）。
 
 `asr.commitIntervalMs` > 0 时 bus 会按音频字节数周期性主动 commit——当某个模型在整段音频上不吐 delta 时才需要（见 §6 的实测）。
 
@@ -57,7 +64,8 @@ Composer 的尾部按钮在草稿为空时是**麦克风**，占位文案是"在
 
 **上游自带 VAD**：探针实测（`workspace/voiceprobe`）我们 40 秒不 `commit` 也完全存活，而上游自己会发 `speech_started/stopped` 与 `input_audio_buffer.committed`。所以 `asr.commitIntervalMs` 保持 0；点停时发的那个 `commit` 可能被拒（缓冲已被上游提交）——那种错误按**警告**处理，不是失败。
 
-**句段边界 ≠ 会话边界（很重要）**：上游会在听到停顿处**自己**发一次 `…transcription.completed`，此时用户往往还按着按钮。所以前端把 `done` 当作**一个句段的结束**（文本并入已定稿部分，继续听），只有**松手**（或到 `maxSeconds`）才收尾润色；这条判断是 `web/src/voice/events.ts` 的 `endsDictation()`，有单测钉着（早期版本把任何 `done` 都当结束，表现为"说着说着自己停了并开始润色"）。
+**句段边界 ≠ 会话边界（很重要）**：上游会在听到停顿处**自己**发一次 `…transcription.completed`，此时用户往往还按着按钮。所以前端把 `done` 当作**一个句段的结束**（文本并入已定稿部分，继续听），只有**松手**（或到 `maxSeconds`）才收尾润色；这条判断是 `nanoworkspace/ui/src/agent/voice/events.ts` 的 `endsDictation()`，有单测钉着（早期版本把任何 `done` 都当结束，表现为"说着说着自己停了并开始润色"）。
+**中继侧必须与它一致**：`done` 只有跟在浏览器自己的 `commit` 之后才是收尾，否则只是段边界（见上）。两边语义不一致时的表现，就是 2026-11-18 修掉的"几秒一断"。
 
 ## 4. 鉴权：为什么是一次性 session id
 
@@ -151,8 +159,38 @@ bus 对内网**不做任何鉴权**（它信任 portal 注入的 `user_id`），
 | 说话中途断线 | 保留已经识别到的文字 + toast"语音中断…" |
 | 平台没有配润色模型 | 直接落识别原文（不显示画笔），不报错 |
 | 上游在按住期间自己结束一个句段 | 只当一个句段结束：文本并入已定稿部分，继续听，不收尾 |
-| 润色失败或返回离谱内容 | 落**识别原文** + 提示；`polishFallback` 兜住"模型开始解释自己"的情况（`web/src/voice/events.ts`） |
+| 润色失败或返回离谱内容 | 落**识别原文** + 提示；`polishFallback` 兜住"模型开始解释自己"的情况（`nanoworkspace/ui/src/agent/voice/events.ts`） |
 | 收音为空 | 提示"没有听清，请再说一次"，草稿不变 |
+
+### 8.1 排错：先看这四行日志与两个指标
+
+每次听写在中继里有三段结构化日志（`nanobus` 的容器日志，带同一个 `tag`）：
+
+| 日志 | 关键字段 | 说明 |
+|---|---|---|
+| `voice: dictation started` | `model` / `provider` / `host` / `turn_detection` | `turn_detection=manual` 表示上游接受了 `null`；其它值（如 `server_vad`）表示它保留了自己的 VAD，会在一句话结束时发 `done` |
+| `voice: segment completed` | `segment` / `seconds` / `chars` | 每完成一句一条；**一次听写出现多条是正常的** |
+| `voice: dictation ended` | `reason` / `seconds` / `audio_bytes` / `segments` / `warnings` / `errors` | 一次听写**只应出现一条** |
+
+`reason` 的取值：
+
+| reason | 含义 |
+|---|---|
+| `commit_done` | 正常：浏览器松手 → commit → 最后一句话完成 → 收尾 |
+| `commit_idle` | 正常：松手时上游已把全部音频转完，没有待完成的内容 |
+| `commit_error` | 松手后上游抱怨了一句（如空缓冲），已降级为 warning 并正常收尾 |
+| `client_close` | 浏览器关掉了连接。**一次听写出现多条 `client_close` + 新连接，就是前端在重连** |
+| `upstream_error` | 录音中上游报错（真正的失败，前端会续接） |
+| `upstream_closed` | 录音中上游关掉了 WS（前端会续接） |
+| `timeout` | 到 `maxSeconds`，或松手后 15s 等不到完成事件 |
+| `write_failed` / `append_failed` / `dial_failed` / `upgrade_failed` | 中继自身的 IO 失败 |
+
+指标（每个模块的 `/metrics`）：
+
+- `bus_voice_sessions_total{outcome}`：按上面 `reason` 计数；看 `outcome="client_close"` 是否异常增长。
+- `bus_voice_events_total{kind}`：`delta`/`done`/`warning`/`error`；`done` 数与停顿次数相当是正常的。
+
+**"是我们在掐"还是"上游真的断了"**：只出现一条 `dictation ended`、`reason=commit_done|commit_idle` → 正常；出现 `upstream_closed`/`upstream_error` → 上游侧；一次听写对应多条 `dictation ended` → 前端在重连（2026-11-18 之前的那种病）。
 
 ## 9. 为什么不用这些替代方案（2026-10-10 调研）
 

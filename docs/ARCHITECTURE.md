@@ -144,8 +144,10 @@ Two transports deserve a note:
 - **Metrics** (see §1.5): every module serves `GET /metrics` anonymously, outside
   its token guard; the bus's are `bus_stream_events_written_total{type}`,
   `bus_stream_subscribers`, `bus_stream_write_seconds`, `bus_agent_sockets`,
-  `bus_agent_socket_pushes_total{kind}`, `bus_rpc_requests_total{type}` and
-  `bus_rate_limited_total`.
+  `bus_agent_socket_pushes_total{kind}`, `bus_rpc_requests_total{type}`,
+  `bus_rate_limited_total`, and the dictation ones `bus_voice_sessions_total{outcome}`
+  and `bus_voice_events_total{kind}` (see `docs/VOICE_INPUT_DESIGN.md` §8.1 for the
+  outcome vocabulary).
 
 ### 1.4 Data ownership
 

@@ -472,7 +472,9 @@ container is unhealthy.
 The bus serves a Prometheus exposition at `GET :9000/metrics` (no token: it is
 inside the deployment network). Three series matter for streaming:
 `bus_stream_events_written_total{type}`, `bus_stream_subscribers` and
-`bus_stream_write_seconds`.
+`bus_stream_write_seconds`; dictation has
+`bus_voice_sessions_total{outcome}` and `bus_voice_events_total{kind}`
+(`docs/VOICE_INPUT_DESIGN.md` §8.1 explains the outcomes).
 
 ## 6. Standalone (no containers)
 

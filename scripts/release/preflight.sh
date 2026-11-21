@@ -83,6 +83,69 @@ else
   ok "no :latest in compose or deploy"
 fi
 
+echo "==> only our base images"
+# Why: the toolchain is pinned in one place (docker/base/versions.env and the
+# agent runtime) and rebuilt by Ops.BaseImages. A service that pulls golang:*,
+# node:* or alpine:* directly re-introduces the drift and the slow installs this
+# setup exists to remove.
+base_ok=1
+for svc in "${SERVICES[@]}"; do
+  df="$svc/Dockerfile"
+  [ -f "$df" ] || continue
+  while read -r _ ref _rest; do
+    case "$ref" in
+      "" | AS | as) continue ;;
+      kobeyoung81/base-* | kobeyoung81/nanoagent-runtime:* | scratch) ;;
+      *) bad "$df: FROM $ref is not a NanoSec base image"; base_ok=0 ;;
+    esac
+  done < <(grep -E '^[[:space:]]*FROM ' "$df")
+done
+if grep -rn ':latest' docker/base/*.Dockerfile >/dev/null 2>&1; then
+  bad "docker/base/Dockerfile pins :latest"; base_ok=0
+fi
+[ "$base_ok" -eq 1 ] && ok "every FROM is a NanoSec base image, none floats"
+
+echo "==> installs clean up after themselves"
+# Why: an install and its cleanup must live in the same RUN, or the package
+# cache, man pages and docs become permanent layers (hundreds of MB in the agent
+# runtime). This walks each RUN statement (backslash continuations joined) and
+# requires the matching cleanup in that same statement.
+hygiene_ok=1
+check_hygiene() {
+  awk '
+    s != "" { s = s " " $0; if ($0 !~ /\\[[:space:]]*$/) { print s; s = "" }; next }
+    /^[[:space:]]*RUN / { s = $0; if ($0 !~ /\\[[:space:]]*$/) { print s; s = "" } }
+  ' "$1" | while IFS= read -r stmt; do
+    case "$stmt" in
+      *"apt-get install"*)
+        case "$stmt" in
+          *"rm -rf /var/lib/apt/lists"*) ;;
+          *) echo "    apt-get install without removing /var/lib/apt/lists in the same RUN"; exit 1 ;;
+        esac ;;
+    esac
+    case "$stmt" in
+      *"apk add"*)
+        case "$stmt" in
+          *"--no-cache"*) ;;
+          *) echo "    apk add without --no-cache"; exit 1 ;;
+        esac ;;
+    esac
+  done
+}
+for svc in "${SERVICES[@]}"; do
+  df="$svc/Dockerfile"
+  [ -f "$df" ] || continue
+  if ! out=$(check_hygiene "$df"); then
+    bad "$df:${out#*$'\n'}"; hygiene_ok=0
+  fi
+done
+if [ -f nanoagent/runtime-base/Dockerfile ]; then
+  if ! out=$(check_hygiene nanoagent/runtime-base/Dockerfile); then
+    bad "nanoagent/runtime-base/Dockerfile:${out#*$'\n'}"; hygiene_ok=0
+  fi
+fi
+[ "$hygiene_ok" -eq 1 ] && ok "every install is cleaned up in its own RUN"
+
 echo "==> every image stays traceable and reproducible"
 dockerfiles_ok=1
 for svc in "${SERVICES[@]}"; do

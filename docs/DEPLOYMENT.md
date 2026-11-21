@@ -109,19 +109,20 @@ the URI when the set has a name.
 
 ### 3.0 镜像构建前置：NanoAgent Runtime
 
-`nanoagent/Dockerfile` 的服务镜像从 `kobeyoung81/nanoagent-runtime:1` 起构建。
-这个基础镜像由 `nanoagent/runtime-base/Dockerfile` **构建一次**，里面包含
-officecli 及其 .NET 依赖、nvm/Node、Go 和常用 CLI 工具：
+`nanoagent/Dockerfile` 的服务镜像从
+`kobeyoung81/nanoagent-runtime:24.04-node26.13.1-go1.27.4-r1` 起构建。这个基础
+镜像由 `nanoagent/runtime-base/Dockerfile` **构建一次**，里面包含 officecli 及其
+.NET 依赖、nvm/Node、Go、md2pdf 和常用 CLI 工具：
 
 ```
-docker build -t kobeyoung81/nanoagent-runtime:1 nanoagent/runtime-base
+docker build -t kobeyoung81/nanoagent-runtime:24.04-node26.13.1-go1.27.4-r1 nanoagent/runtime-base
 ```
 
-它只在本地保留、不推送镜像仓库；**在 CI 使用的同一个 Docker daemon 上构建**
-（Jenkins 构建时 `FROM` 直接命中）。本地镜像被清理后需要重新执行这条命令，
-否则服务镜像构建会尝试去镜像仓库拉取而失败。officecli 因此不再从 GitHub 下载
-（此前的下载在国内构建机上长期超时/协议错误）。工具链升级时构建 `:2`、把
-`nanoagent/Dockerfile` 指向它，并保留 `:1` 供回退。
+它**同时推送到 Docker Hub**（公开，和其它服务镜像一致），CI 优先命中本地副本，
+换机器时直接拉取。工具链升级时改 `runtime-base/Dockerfile` 的 ARG、把 tag 的修订
+号加一（`-r2`）、构建并推送，再把 `nanoagent/Dockerfile` 指向新 tag，旧 tag 保留
+供回退。officecli 因此不再从 GitHub 下载（此前的下载在国内构建机上长期超时/协议
+错误）。
 
 ## 3. Docker Compose (single host)
 

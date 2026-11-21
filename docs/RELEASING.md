@@ -46,6 +46,67 @@ written down once, here:
 The two init containers share their service's image and version variable on
 purpose: a released image is what reruns the migrations (see §6).
 
+### 2.1 Base images
+
+The toolchains are not installed by the service builds. Four images are built
+once, tagged with their exact contents, and pushed to Docker Hub under
+`kobeyoung81`:
+
+| Image | Tag (example) | Built from | Contents |
+|---|---|---|---|
+| `base-go` | `1.27.4-alpine3.24-r2` | `docker/base/go.Dockerfile` | `golang:1.27.4-alpine3.24` + git, ca-certificates, tzdata; `GOPROXY`/`GOFLAGS`/`CGO_ENABLED` fixed |
+| `base-runtime` | `alpine3.24.4-r2` | `docker/base/runtime.Dockerfile` | `alpine:3.24.4` + ca-certificates, tzdata |
+| `base-node` | `26.13.1-alpine3.24-r2` | `docker/base/node.Dockerfile` | `node:26.13.1-alpine3.24` + npm registry set globally |
+| `nanoagent-runtime` | `24.04-node26.13.1-go1.27.4-r2` | `nanoagent/runtime-base/Dockerfile` | Ubuntu 24.04 tool layer for agent containers: apt packages, nvm/Node, Go, officecli, md2pdf |
+
+The version matrix lives in **`docker/base/versions.env`** (Go, Alpine, Node,
+`BASE_REV`). The agent runtime carries its own versions in its Dockerfile
+because it is a different kind of image (an application runtime, not a builder).
+
+To bump a toolchain:
+
+1. edit `docker/base/versions.env` (and the agent runtime Dockerfile's ARGs),
+2. bump `BASE_REV` — a tag is a promise about the contents, never rebuild one,
+3. run `Ops.BaseImages` with `PUSH=true` (or `scripts/base/build-base-images.sh --push`),
+4. update the `FROM` lines in the service Dockerfiles to the new tag,
+5. `preflight` fails any service that still pulls `golang:*`, `node:*`,
+   `alpine:*` or `ubuntu:*` directly.
+
+The images are pushed so a fresh machine does not rebuild them; the CI hits the
+local copy first. A tag that already exists is never rebuilt in place.
+
+### 2.2 Layer hygiene and the size baseline
+
+Every install and its cleanup share one `RUN`. `preflight` checks it: an
+`apt-get install` without `rm -rf /var/lib/apt/lists` in the same statement, or
+an `apk add` without `--no-cache`, fails the release. The rules, in short:
+
+* `apk add --no-cache`; `apt-get install --no-install-recommends`, then
+  `apt-get clean` and remove `/var/lib/apt/lists`, `/var/cache/apt/archives`,
+  `/usr/share/doc`, `/usr/share/man`, `/usr/share/info` — nothing at runtime
+  reads them, and `man` is not installed;
+* remove what the installer only needed while installing: `/tmp/*`,
+  `$NVM_DIR/.cache`, `$NVM_DIR/.git`, `/root/.npm`,
+  `/usr/local/go/{doc,test,api,misc}`;
+* multi-stage: compilers, git clones and node_modules stay in the build stage;
+* `--mount=type=cache` keeps the Go module cache, the Go build cache and the npm
+  cache **outside** the image. They are build machinery, not image content.
+
+Sizes are recorded here after each base image build (`Ops.BaseImages` prints
+every layer). The budget is a ceiling, not a target:
+
+| Image | Budget |
+|---|---|
+| `base-go` | upstream `golang` + ≤ 15 MB |
+| `base-runtime` | ≤ 12 MB |
+| `base-node` | upstream `node` + ≤ 5 MB |
+| `nanoagent-runtime` | no install layer above 450 MB; total ≤ 1.60 GB |
+| `nanoagent` (final) | does not grow: ≤ 1.60 GB |
+
+`docker builder prune` keeps cache mounts unless `--all` is passed. Use
+`docker builder prune --keep-storage=20GB`; `--all` throws away the build cache
+this project depends on and the next build falls back to minutes.
+
 ## 3 What the reproducibility gate checks, and why not the image digest
 
 The original proposal compared image digests between a dev build and a rebuild from

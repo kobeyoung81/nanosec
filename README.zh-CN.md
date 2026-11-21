@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="docs/assets/logo.svg" width="96" height="96" alt="NanoSec">
+  <img src="docs/assets/lockup.svg" width="360" alt="NanoSec">
 </p>
-
-<h1 align="center">NanoSec</h1>
 
 <p align="center">
   <strong>自托管、多用户的 AI 助手平台（Go 编写）</strong><br>
@@ -18,16 +16,25 @@
 </p>
 
 <p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-155DFC.svg" alt="License: AGPL-3.0"></a>
   <a href="https://go.dev"><img src="https://img.shields.io/badge/go-1.26-00ADD8.svg" alt="Go 1.26"></a>
-  <a href="https://gitee.com/kobeyoung81/nanosec/releases"><img src="https://img.shields.io/badge/release-v0.1.0-blue.svg" alt="Release v0.1.0"></a>
+  <a href="https://gitee.com/kobeyoung81/nanosec/releases"><img src="https://img.shields.io/badge/release-v0.1.0-155DFC.svg" alt="Release v0.1.0"></a>
 </p>
 
 <p align="center">
-  <img src="docs/assets/console.svg" width="100%" alt="NanoSec 控制台：对话、智能体与管理端在同一个外壳里">
+  <img src="docs/assets/console-light-zh.png" width="100%" alt="NanoSec 工作台：左侧智能体、下方对话列表、中间是会话与输入框">
 </p>
 
-<p align="center"><sub>控制台：对话、智能体与管理端在同一个外壳里。（示意图，真机截图待补。）</sub></p>
+<p align="center"><sub>工作台：左侧智能体、下方对话列表、中间是会话与输入框。浅色主题，1440 × 900。</sub></p>
+
+<details>
+<summary>深色主题</summary>
+
+<p align="center">
+  <img src="docs/assets/console-dark-zh.png" width="100%" alt="同一个工作台的深色主题">
+</p>
+
+</details>
 
 ## 你能得到什么
 
@@ -82,6 +89,20 @@ docker compose up -d
    别的东西不该放在那里。
 2. **一个模块一组前缀。** 每个集合只属于一个服务；其他人要用，走那个服务的 API。
 3. **服务之间走内部 HTTP**，带共享令牌 —— 不共享内存状态，也没有第二个数据库。
+
+## 控制台
+
+<p align="center">
+  <img src="docs/assets/admin.png" width="100%" alt="管理端：平台健康、用户、容器与告警在同一个界面">
+</p>
+
+<p align="center"><sub>管理端：健康、用户、容器、审计与告警规则 —— 同一个外壳里的运维那一半。</sub></p>
+
+<p align="center">
+  <img src="docs/assets/artifacts.png" width="100%" alt="作品库：空间、目录与就地渲染的文档">
+</p>
+
+<p align="center"><sub>作品库：左边空间与目录，右边就地渲染发布出来的文档。</sub></p>
 
 ## 文档
 

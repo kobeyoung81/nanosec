@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="docs/assets/logo.svg" width="96" height="96" alt="NanoSec">
+  <img src="docs/assets/lockup.svg" width="360" alt="NanoSec">
 </p>
-
-<h1 align="center">NanoSec</h1>
 
 <p align="center">
   <strong>Self-hosted, multi-user AI assistant platform in Go</strong><br>
@@ -18,16 +16,25 @@
 </p>
 
 <p align="center">
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="License: AGPL-3.0"></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-155DFC.svg" alt="License: AGPL-3.0"></a>
   <a href="https://go.dev"><img src="https://img.shields.io/badge/go-1.26-00ADD8.svg" alt="Go 1.26"></a>
-  <a href="https://gitee.com/kobeyoung81/nanosec/releases"><img src="https://img.shields.io/badge/release-v0.1.0-blue.svg" alt="Release v0.1.0"></a>
+  <a href="https://gitee.com/kobeyoung81/nanosec/releases"><img src="https://img.shields.io/badge/release-v0.1.0-155DFC.svg" alt="Release v0.1.0"></a>
 </p>
 
 <p align="center">
-  <img src="docs/assets/console.svg" width="100%" alt="The NanoSec console: chat, agents and admin in one shell">
+  <img src="docs/assets/console-light.png" width="100%" alt="The NanoSec workbench: agents on the left, conversations below, one composer in the middle">
 </p>
 
-<p align="center"><sub>The console: chat, agents and admin in one shell. (Illustration — real screenshots coming.)</sub></p>
+<p align="center"><sub>The workbench: agents on the left, conversations below, the composer in the middle. Light theme, 1440 × 900.</sub></p>
+
+<details>
+<summary>Dark theme</summary>
+
+<p align="center">
+  <img src="docs/assets/console-dark.png" width="100%" alt="The same workspace in the dark theme">
+</p>
+
+</details>
 
 ## What you get
 
@@ -89,6 +96,20 @@ Three rules hold the split together:
    anybody else reads it over that service's API.
 3. **Services talk over internal HTTP** with the shared token — no shared package
    state, no second database.
+
+## The console
+
+<p align="center">
+  <img src="docs/assets/admin.png" width="100%" alt="The admin console: platform health, users, containers and alerts in one place">
+</p>
+
+<p align="center"><sub>The admin console: health, users, containers, audit and alert rules — the operational half of the same shell.</sub></p>
+
+<p align="center">
+  <img src="docs/assets/artifacts.png" width="100%" alt="The work library: spaces, folders and a rendered document">
+</p>
+
+<p align="center"><sub>The work library: spaces and folders on the left, the published document rendered in place.</sub></p>
 
 ## Documentation
 

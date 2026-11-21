@@ -120,7 +120,7 @@ docker build -t kobeyoung81/nanoagent-runtime:24.04-node26.13.1-go1.27.4-r1 nano
 
 它**同时推送到 Docker Hub**（公开，和其它服务镜像一致），CI 优先命中本地副本，
 换机器时直接拉取。工具链升级时改 `runtime-base/Dockerfile` 的 ARG、把 tag 的修订
-号加一（`-r2`）、构建并推送，再把 `nanoagent/Dockerfile` 指向新 tag，旧 tag 保留
+号加一（`-r3`）、构建并推送，再把 `nanoagent/Dockerfile` 指向新 tag，旧 tag 保留
 供回退。officecli 因此不再从 GitHub 下载（此前的下载在国内构建机上长期超时/协议
 错误）。
 

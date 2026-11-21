@@ -54,10 +54,10 @@ once, tagged with their exact contents, and pushed to Docker Hub under
 
 | Image | Tag (example) | Built from | Contents |
 |---|---|---|---|
-| `base-go` | `1.27.4-alpine3.24-r2` | `docker/base/go.Dockerfile` | `golang:1.27.4-alpine3.24` + git, ca-certificates, tzdata; `GOPROXY`/`GOFLAGS`/`CGO_ENABLED` fixed |
-| `base-runtime` | `alpine3.24.4-r2` | `docker/base/runtime.Dockerfile` | `alpine:3.24.4` + ca-certificates, tzdata |
-| `base-node` | `26.13.1-alpine3.24-r2` | `docker/base/node.Dockerfile` | `node:26.13.1-alpine3.24` + npm registry set globally |
-| `nanoagent-runtime` | `24.04-node26.13.1-go1.27.4-r2` | `nanoagent/runtime-base/Dockerfile` | Ubuntu 24.04 tool layer for agent containers: apt packages, nvm/Node, Go, officecli, md2pdf |
+| `base-go` | `1.27.4-alpine3.24-r3` | `docker/base/go.Dockerfile` | `golang:1.27.4-alpine3.24` + git, ca-certificates, tzdata; `GOPROXY`/`GOFLAGS`/`CGO_ENABLED` fixed |
+| `base-runtime` | `alpine3.24.4-r3` | `docker/base/runtime.Dockerfile` | `alpine:3.24.4` + ca-certificates, tzdata |
+| `base-node` | `26.13.1-alpine3.24-r3` | `docker/base/node.Dockerfile` | `node:26.13.1-alpine3.24` + npm registry set globally |
+| `nanoagent-runtime` | `24.04-node26.13.1-go1.27.4-r3` | `nanoagent/runtime-base/Dockerfile` | Ubuntu 24.04 tool layer for agent containers: apt packages, nvm/Node, Go, officecli, md2pdf |
 
 The version matrix lives in **`docker/base/versions.env`** (Go, Alpine, Node,
 `BASE_REV`). The agent runtime carries its own versions in its Dockerfile

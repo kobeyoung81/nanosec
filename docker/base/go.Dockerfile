@@ -4,8 +4,10 @@
 # `apk add git` itself. Three things come from here that the bare golang image
 # does not give us:
 #
-#   * git, ca-certificates and tzdata — installed once, in one layer, instead of
-#     in each of the nine service builds
+#   * git, bash, ca-certificates and tzdata — installed once, in one layer,
+#     instead of in each of the nine service builds. bash is not for the build:
+#     nanoagent's shell and terminal tests spawn it, and this image is also the
+#     L1 step's runtime, so a test that needs the agent's shell must find it.
 #   * GOPROXY/GOFLAGS/CGO_ENABLED as environment, so the flags cannot drift
 #     between services
 #   * the cache directories the service builds mount with `--mount=type=cache`
@@ -25,7 +27,7 @@ LABEL org.opencontainers.image.title="nanosec-base-go" \
 
 # One RUN, so the package index and cache never reach a committed layer.
 RUN set -eux; \
-    apk add --no-cache git ca-certificates tzdata; \
+    apk add --no-cache git bash ca-certificates tzdata; \
     mkdir -p /root/.cache/go-build /root/go/pkg/mod; \
     rm -rf /var/cache/apk/* /tmp/*
 

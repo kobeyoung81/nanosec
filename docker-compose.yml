@@ -233,9 +233,16 @@ services:
       NANOSEC_PROVISIONER_URL: http://nanorunner:8080
       NANOSEC_BUS_URL: http://nanobus:9000
       NANOSEC_BUS_INTERNAL_TOKEN: ${NANOSEC_BUS_INTERNAL_TOKEN:?set NANOSEC_BUS_INTERNAL_TOKEN in .env}
+      # Configuration belongs to the admin module; the goal switch is read from
+      # its agent component (30s cache, off when unreadable).
+      NANOSEC_ADMIN_URL: http://nanoadmin:8080
+      # The one database this module owns: workspace_goals. Same server as the
+      # rest of the platform, its own collection inside the same database.
+      NANOSEC_WORKSPACE_MONGO_URI: ${NANOSEC_BUS_DATABASE_URI:?set NANOSEC_BUS_DATABASE_URI in .env}
     depends_on:
       - nanoportal
       - nanorunner
+      - nanoadmin
 
   # Chat platform gateway. Requires at least one channel enabled in the bus  # config (portal → Configs → gateway, e.g. channels.web.enabled=true is the
   # default). The web channel (:8080) serves the portal's browser chat and is

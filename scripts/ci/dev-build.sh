@@ -10,6 +10,14 @@ export GIT_COMMITTER_NAME=kobeyoung81 GIT_COMMITTER_EMAIL=kobeyoung81@sina.com
 DS=/var/jenkins_home/dev-secrets
 mkdir -p "$DS"
 
+# The L1 step runs in the same toolchain the images are built with. Read the tag
+# from the version matrix rather than repeating it: a bump there must not leave a
+# second copy behind.
+# shellcheck disable=SC1091
+. docker/base/versions.env
+L1_IMAGE="kobeyoung81/base-go:${GO_VERSION}-alpine${GO_ALPINE}-${BASE_REV}"
+echo "L1 image: $L1_IMAGE"
+
 echo "=== preflight ==="
 ./scripts/release/preflight.sh
 
@@ -39,7 +47,7 @@ run_l1() {
     -v nanosec-gomod:/root/go/pkg/mod \
     -v nanosec-gocache:/root/.cache/go-build \
     -w "/src/$1" \
-    kobeyoung81/base-go:1.27.4-alpine3.24-r1 \
+    "$L1_IMAGE" \
     -c 'go build ./... && go vet ./... && go test -count=1 ./...'
 }
 if [ -n "$CHANGED" ]; then

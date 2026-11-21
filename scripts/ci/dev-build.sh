@@ -37,6 +37,9 @@ echo "changed modules: ${CHANGED:-none}"
 echo "=== L1: build / vet / test（变更模块 + nanoprotocol，在 base-go 里跑）==="
 # Jenkins 容器没有 Go；base-go 是服务镜像构建用的同一套工具链与同一版本，
 # 所以 L1 通过就意味着镜像编得过。两个缓存卷让第二次起不再从零编译。
+# -p 1：包的测试串行跑。nanoagent 的 hypervisor 流式测试在 4 vCPU 上并行跑包时
+# 会踩 5s 读超时（已在 base-go 里复现，包单独跑 0.7s、并行跑整模块必挂）；
+# 串行后稳定 1.5s。模块之间本来就是串行的，代价很小。
 # 工作区路径要换成宿主路径（容器内 /var/jenkins_home → 宿主 docker_mounts/jenkins_home）。
 HOSTWS=$(echo "$WORKSPACE" | sed 's|^/var/jenkins_home|/home/kobeyoung81/docker_mounts/jenkins_home|')
 FLAKY=$DS/flaky.log
@@ -48,7 +51,7 @@ run_l1() {
     -v nanosec-gocache:/root/.cache/go-build \
     -w "/src/$1" \
     "$L1_IMAGE" \
-    -c 'go build ./... && go vet ./... && go test -count=1 ./...'
+    -c 'go build ./... && go vet ./... && go test -count=1 -p 1 ./...'
 }
 if [ -n "$CHANGED" ]; then
   for m in nanoprotocol $CHANGED; do

@@ -103,3 +103,13 @@ jobs:
               print(f"::error::missing relative target {line}")
           sys.exit(1 if bad else 0)
           PY
+
+  docs-assets:
+    name: documentation assets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+      - name: size, references and retired colours
+        run: ./scripts/check-docs-assets.sh

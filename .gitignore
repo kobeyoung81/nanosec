@@ -18,3 +18,7 @@
 .env
 
 debug/
+
+# Demo environment tooling (scripts/demo): real passwords, installed deps
+scripts/demo/.env.demo
+scripts/demo/node_modules/

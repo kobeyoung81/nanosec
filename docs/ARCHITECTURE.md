@@ -510,8 +510,9 @@ ships), then fetches each plugin's manifest and loads components with Module
 Federation at runtime. A plugin contributes two things, both from the same manifest:
 
 - **panels** — workbench panels it owns (the work library's tree and document);
-- **pages** — routes it takes over. The shell keeps its own page as the fallback, so
-  a plugin can be added or removed with a manifest change rather than a rebuild;
+- **pages** — routes it takes over. The shell keeps no copy of the page: a plugin
+  can be added or removed with a manifest change, and a missing one reports the
+  module as unavailable rather than rendering an older implementation;
 - **nav** — the console's menu entries (`{id, parent, path, title, icon, section,
   order}`). A title is localized text shipped in the manifest, not a key into the
   shell's catalogues: the module that owns the screen owns its name in every
@@ -536,11 +537,12 @@ end without touching the shell.
 Four plugins exist today:
 
 - `nanoartifacts` (`/plugins/artifacts/`) contributes the two library panels and the
-  `/artifacts` page; the shell's framed page remains as the rollback path.
+  `/artifacts` page. The shell routes to it and keeps no copy: without the plugin the
+  route reports the module as unavailable.
 - `auth` (`/plugins/auth/`, served by `nanoauth` itself) contributes the account list
   at `/admin/users`, the account detail at `/admin/users/:id`, the user's own account
   at `/me`, and the three sign-in screens (`/login`, `/register`,
-  `/change-password`); the shell's own pages remain as the fallback. A contribution
+  `/change-password`). The shell keeps no copy of them. A contribution
   may be a route pattern — the shell matches it against the current location, and the
   page reads the parameters from `ctx.params`. Storing the session stays the shell's:
   a page hands the issued tokens back through `features.signIn`, so the rule that
@@ -550,8 +552,9 @@ Four plugins exist today:
   `/admin/components/:type` detail route), the configuration centre, the audit log,
   the conversation log, the alert rules, the capability centre, the model centre, the
   dictation console, the directory login, the agent-type editor and the runtime
-  snapshot — the whole console. The shell keeps its own pages only as the rollback
-  path for a deployment that removes the plugin.
+  snapshot — the whole console. The shell keeps no copy of any of them: an
+  unavailable plugin renders the console's "module not loaded" state, and the
+  rollback is the previous image rather than a second implementation.
 
   A page's context reaches the components it renders through the plugin's own
   provider (`host.tsx`): a nested form and a lib module both read the mounted page's
@@ -565,8 +568,8 @@ Four plugins exist today:
   the host the shell installs. A manifest may also **lend a component to the shell**
   (`provides.filePanel`): pages in other modules embed the workspace's browser
   through `ctx.ui.FilePanel`, which resolves the provided component and hands it the
-  page's context — one implementation, and the shell's own copy stays only as the
-  fallback while the plugin loads or is absent.
+  page's context — one implementation. While the manifest is in flight the slot
+  shows a spinner; with no provider it names the module that owns the browser.
 - the same module contributes the **git panel** (`workspace.git`): a workbench panel
   with the repository state, the file tree, staging and the diff view. A panel gets
   the same services a page does (`PanelContext` = the shell's strings, kit, data
@@ -578,10 +581,10 @@ Four plugins exist today:
   file browser, the account's agent settings and the git panel) is one page that
   brings its own dock layout. The panels stay internal to the page rather than
   separate contributions — they share the workbench's context, its layout storage and
-  its focused agent, and the screen is useless without them. The shell keeps its own
-  `AgentPage` as the rollback path, so removing the plugin from the manifest restores
-  the previous screen. Panel ids, layout keys and stored state are unchanged, so a
-  browser that had a layout before the move reopens with it.
+  its focused agent, and the screen is useless without them. The shell keeps no copy
+  of it: removing the plugin from the manifest reports the route as unavailable
+  (rollback is the previous image). Panel ids, layout keys and stored state are
+  unchanged, so a browser that had a layout before the move reopens with it.
 
 A page cannot import the shell's source, so its context carries the shell's
 component kit (`ctx.ui`), the strings (`ctx.t`), a token-carrying data client

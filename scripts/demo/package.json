@@ -1,0 +1,10 @@
+{
+  "name": "nanosec-demo",
+  "private": true,
+  "type": "module",
+  "description": "Seed the demo accounts and take the console screenshots",
+  "dependencies": {
+    "playwright": "^1.65.1",
+    "sharp": "^0.34.4"
+  }
+}

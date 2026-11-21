@@ -36,7 +36,7 @@
 	branch = master
 [submodule "nanoadmin"]
 	path = nanoadmin
-	url = git@gitee.com:kobeyoung81/nanoadmin.git
+	url = ../nanoadmin.git
 [submodule "nanoworkspace"]
 	path = nanoworkspace
 	url = ../nanoworkspace.git

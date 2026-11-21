@@ -95,7 +95,7 @@ export const TALKS = {
 // ── work library ──────────────────────────────────────────────────────────
 export const WORKS = {
   zh: [
-    { folder: '复盘', template: 'report', spec: {
+    { folder: '复盘', showcase: true, template: 'report', spec: {
       kicker: '复盘 · 2026 Q3', title: '2026 Q3 复盘',
       lede: '一个季度里做成了什么、卡在哪、下个季度只做三件事。',
       sections: [
@@ -197,7 +197,7 @@ export const WORKS = {
       ] } },
   ],
   en: [
-    { folder: 'Retros', template: 'report', spec: {
+    { folder: 'Retros', showcase: true, template: 'report', spec: {
       kicker: 'Retro · Q3 2026', title: 'Q3 2026 retro',
       lede: 'What shipped, what stalled, and the three things next quarter is allowed to be about.',
       sections: [

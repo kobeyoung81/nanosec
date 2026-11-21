@@ -1,7 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 560" width="1040" height="560" role="img" aria-label="NanoSec architecture: six channels reach one entry; eight services share one database with one prefix per module">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1040 600" width="1040" height="600" role="img" aria-label="NanoSec architecture: six channels reach one entry; eight services share one database with one prefix per module">
   <title>NanoSec architecture</title>
   <g font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif">
-    <rect x="1" y="1" width="1038" height="558" rx="18" fill="#f5f8fc" stroke="#d2dae6" stroke-width="2"/>
+    <rect x="1" y="1" width="1038" height="598" rx="18" fill="#f5f8fc" stroke="#d2dae6" stroke-width="2"/>
     <rect x="25" y="30" width="150" height="44" rx="11" fill="#ffffff" stroke="#e4eaf2" stroke-width="1.5"/>
     <text x="100" y="58" text-anchor="middle" font-size="15" fill="#4c5c72">Web chat</text>
     <rect x="193" y="30" width="150" height="44" rx="11" fill="#ffffff" stroke="#e4eaf2" stroke-width="1.5"/>
@@ -50,10 +50,11 @@
     <rect x="772" y="366" width="228" height="82" rx="12" fill="#ffffff" stroke="#d2dae6" stroke-width="1.5"/>
     <text x="886" y="402" text-anchor="middle" font-size="20" font-weight="600" fill="#0f172a">provisioner</text>
     <text x="886" y="427" text-anchor="middle" font-size="15" fill="#4c5c72">containers</text>
-    <path d="M520 448V470" stroke="#b3c0d1" stroke-width="2" fill="none"/>
-    <rect x="200" y="470" width="640" height="62" rx="14" fill="#0f172a"/>
-    <text x="224" y="497" font-size="19" font-weight="700" fill="#ffffff">one MongoDB</text>
-    <text x="224" y="520" font-size="13" font-family="ui-monospace, Menlo, Consolas, monospace" fill="#a9b7c8">auth_ · admin_ · portal_ · bus_ · provisioner_ · sys_ · artifacts_ · workspace_</text>
-    <text x="520" y="538" text-anchor="middle" font-size="14" fill="#4c5c72">A module writes only its own prefix; cross-module reads go over internal HTTP with the shared token.</text>
+    <path d="M154 448V444 M398 448V444 M642 448V444 M886 448V444" stroke="#b3c0d1" stroke-width="2" fill="none"/>
+    <path d="M154 444H886" stroke="#b3c0d1" stroke-width="2" fill="none"/>
+    <path d="M520 444V466" stroke="#b3c0d1" stroke-width="2" fill="none"/>
+    <rect x="340" y="466" width="360" height="56" rx="14" fill="#0f172a"/>
+    <text x="520" y="501" text-anchor="middle" font-size="20" font-weight="600" fill="#ffffff">one MongoDB</text>
+    <text x="520" y="560" text-anchor="middle" font-size="14" fill="#4c5c72">A module writes only its own prefix; cross-module reads go over internal HTTP with the shared token.</text>
   </g>
 </svg>

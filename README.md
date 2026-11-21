@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="docs/assets/lockup.svg" width="360" alt="NanoSec">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lockup-dark.svg">
+    <img src="docs/assets/lockup.svg" width="360" alt="NanoSec">
+  </picture>
 </p>
 
 <p align="center">

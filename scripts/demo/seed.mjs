@@ -11,6 +11,7 @@ import { api, token, U } from './lib/api.mjs'
 import { login, sendTurn, openAgent, newConversation, waitIdle } from './lib/browser.mjs'
 import { ACCOUNTS, BASE_URL, CONTENT, TALKS, WORKS } from './lib/personas.mjs'
 import { templates } from './lib/docs.mjs'
+import { showcase } from './lib/showcase.mjs'
 
 const argv = process.argv.slice(2)
 const arg = (name, fallback) => {
@@ -154,7 +155,9 @@ async function ensureLibrary(account) {
     const parentId = folderId[w.folder]
     const exists = tree.find((n) => n.parent_id === parentId && n.title === w.spec.title)
     if (exists) continue
-    const html = templates[w.template](w.spec)
+    // One work is the showcase: full HTML with its own CSS and JS, which is
+    // what the library's preview iframe (allow-scripts) is for.
+    const html = w.showcase ? showcase(account.key) : templates[w.template](w.spec)
     await lib.post(`${U.library}/artifacts`, {
       space_id: space.id, parent_id: parentId, title: w.spec.title, kind: 'doc',
       html, note: account.key === 'zh' ? '演示数据 · 示例作品' : 'Demo data · sample work',

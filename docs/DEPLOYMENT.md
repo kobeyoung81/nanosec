@@ -110,17 +110,20 @@ the URI when the set has a name.
 ### 3.0 镜像构建前置：NanoAgent Runtime
 
 `nanoagent/Dockerfile` 的服务镜像从
-`kobeyoung81/nanoagent-runtime:24.04-node26.13.1-go1.27.4-r1` 起构建。这个基础
+`kobeyoung81/nanoagent-runtime:<AGENT_RUNTIME_TAG>` 起构建（tag 的唯一来源是
+`docker/base/versions.env`）。这个基础
 镜像由 `nanoagent/runtime-base/Dockerfile` **构建一次**，里面包含 officecli 及其
 .NET 依赖、nvm/Node、Go、md2pdf 和常用 CLI 工具：
 
 ```
-docker build -t kobeyoung81/nanoagent-runtime:24.04-node26.13.1-go1.27.4-r1 nanoagent/runtime-base
+# tag 取自 docker/base/versions.env 的 AGENT_RUNTIME_TAG
+docker build -t "kobeyoung81/nanoagent-runtime:$(sed -n 's/^AGENT_RUNTIME_TAG=//p' \
+  docker/base/versions.env)" nanoagent/runtime-base
 ```
 
 它**同时推送到 Docker Hub**（公开，和其它服务镜像一致），CI 优先命中本地副本，
 换机器时直接拉取。工具链升级时改 `runtime-base/Dockerfile` 的 ARG、把 tag 的修订
-号加一（`-r3`）、构建并推送，再把 `nanoagent/Dockerfile` 指向新 tag，旧 tag 保留
+号加一（`-r1` → `-r2`）、构建并推送，再把 `nanoagent/Dockerfile` 指向新 tag，旧 tag 保留
 供回退。officecli 因此不再从 GitHub 下载（此前的下载在国内构建机上长期超时/协议
 错误）。
 

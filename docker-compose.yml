@@ -165,7 +165,11 @@ services:
       # project's own <project>_default. Leaving it empty is how the stack stays
       # correct without a second variable.
       NANOSEC_RUNNER_NETWORK: ${NANOSEC_RUNNER_NETWORK:-}
-      NANOSEC_RUNNER_AGENT_IMAGE: ${NANOSEC_RUNNER_AGENT_IMAGE:-}
+      # Which image the runner provisions agent containers from. It follows the
+      # same variable that builds the image above, so "the image this deploy
+      # built" and "the image agents run" cannot drift apart. Overriding the
+      # version (a rollback, a replay) moves both at once.
+      NANOSEC_RUNNER_AGENT_IMAGE: kobeyoung81/nanoagent:${NANOAGENT_VERSION:-nanosec}
       # Prefix for the agent container and data volume names: the same variable
       # that names the compose project names them too.
       NANOSEC_RUNNER_NAME_PREFIX: ${ENV_PREFIX:-}

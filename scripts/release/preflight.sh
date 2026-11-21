@@ -83,6 +83,42 @@ else
   ok "no :latest in compose or deploy"
 fi
 
+echo "==> agent runtime is the glibc image and matches versions.env"
+# Why: agent containers run whatever the user installs (apt packages, .NET via
+# officecli, python wheels, node native modules), so they need glibc. Alpine is
+# for the services and the build stages only. The tag is asserted against the
+# version matrix as well, because it is written in three places.
+agent_ok=1
+agent_tag=""
+if [ -f docker/base/versions.env ]; then
+  agent_tag=$(sed -n 's/^AGENT_RUNTIME_TAG=//p' docker/base/versions.env)
+fi
+if [ -z "$agent_tag" ]; then
+  bad "docker/base/versions.env has no AGENT_RUNTIME_TAG"; agent_ok=0
+fi
+agent_from=$(grep -E '^[[:space:]]*FROM ' nanoagent/Dockerfile | tail -1 | awk '{print $2}')
+case "$agent_from" in
+  "kobeyoung81/nanoagent-runtime:${agent_tag}") ;;
+  kobeyoung81/nanoagent-runtime:*)
+    bad "nanoagent/Dockerfile runs on ${agent_from}, versions.env says ${agent_tag}"; agent_ok=0 ;;
+  *)
+    bad "nanoagent/Dockerfile runs on ${agent_from}, which is not the NanoAgent Runtime"; agent_ok=0 ;;
+esac
+runtime_from=$(grep -E '^[[:space:]]*FROM ' nanoagent/runtime-base/Dockerfile | tail -1 | awk '{print $2}')
+case "$runtime_from" in
+  ubuntu:*) ;;
+  *) bad "nanoagent/runtime-base/Dockerfile runs on ${runtime_from}; the agent needs glibc (ubuntu:), not musl"; agent_ok=0 ;;
+esac
+for bdf in docker/base/*.Dockerfile; do
+  [ -f "$bdf" ] || continue
+  base_from=$(grep -E '^[[:space:]]*FROM ' "$bdf" | tail -1 | awk '{print $2}')
+  case "$base_from" in
+    alpine:* | golang:*-alpine* | node:*-alpine*) ;;
+    *) bad "$bdf runs on ${base_from}; the build images are Alpine"; agent_ok=0 ;;
+  esac
+done
+[ "$agent_ok" -eq 1 ] && ok "agent runtime is glibc (${agent_tag}); build images are Alpine"
+
 echo "==> only our base images"
 # Why: the toolchain is pinned in one place (docker/base/versions.env and the
 # agent runtime) and rebuilt by Ops.BaseImages. A service that pulls golang:*,

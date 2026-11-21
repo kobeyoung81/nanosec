@@ -95,13 +95,17 @@ an `apk add` without `--no-cache`, fails the release. The rules, in short:
 Sizes are recorded here after each base image build (`Ops.BaseImages` prints
 every layer). The budget is a ceiling, not a target:
 
-| Image | Budget |
-|---|---|
-| `base-go` | upstream `golang` + ≤ 15 MB |
-| `base-runtime` | ≤ 12 MB |
-| `base-node` | upstream `node` + ≤ 5 MB |
-| `nanoagent-runtime` | no install layer above 450 MB; total ≤ 1.60 GB |
-| `nanoagent` (final) | does not grow: ≤ 1.60 GB |
+| Image | Budget | Measured 2026-11-21 (`-r3`) |
+|---|---|---|
+| `base-go` | upstream `golang` + ≤ 15 MB | 256 MB (upstream 244 MB) |
+| `base-runtime` | ≤ 12 MB | 8 MB |
+| `base-node` | upstream `node` + ≤ 5 MB | 171 MB |
+| `nanoagent-runtime` | no install layer above 450 MB; total ≤ 1.45 GB | 1131 MB |
+| `nanoagent` (final) | does not grow: ≤ 1.25 GB | 1.19 GB |
+
+The `nanoagent` figures are the point of the hygiene rules: the runtime used to be
+1.56 GB and the service image 1.59 GB before the man pages, the nvm and npm
+caches and `/usr/local/go/{doc,test,api,misc}` were dropped.
 
 `docker builder prune` keeps cache mounts unless `--all` is passed. Use
 `docker builder prune --keep-storage=20GB`; `--all` throws away the build cache

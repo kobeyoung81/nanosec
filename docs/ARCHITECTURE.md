@@ -525,6 +525,15 @@ Federation at runtime. A plugin contributes two things, both from the same manif
   keeps its own list, which is what makes removing the admin plugin a rollback
   rather than an empty console.
 
+A plugin that ships its own utility classes must put them in the **`plugin`** CSS
+layer. Every plugin stylesheet is appended to `<head>` after the shell's, and inside
+one layer the later file wins while a media query adds no specificity — so a plugin's
+bare `.hidden` beat the shell's `.sm\:block` and every `hidden sm:block` stayed hidden
+on a desktop. The shell declares the order (`theme, base, components, plugin,
+utilities`) before it imports Tailwind, which keeps the shell's variants on top and
+still lets a plugin emit classes the shell never had. The palette and the base rules
+stay the shell's: plugins import the theme and utilities layers, never preflight.
+
 The contract exists in four copies (the shell plus the three plugin hosts that build
 against it). They are **generated**: `nanoportal/web/scripts/sync-contract.mjs`
 writes them and `--check` reports drift. Hand-copying is how a field once reached

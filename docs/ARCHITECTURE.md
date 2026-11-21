@@ -50,7 +50,7 @@ or restarted on its own. Three rules hold the split together:
 | `nanoprovisioner` | `nanoprovisioner` | Consumes the provisioning queue; creates, restarts and disposes agent containers through docker / swarm / k8s; applies per-tier quotas. | **yes** — `provisioner_*` |
 | `nanoauth` | `nanoauth` | Accounts, channel links, OAuth links, refresh tickets, git shortcuts, per-user secrets; login, RS256 tokens and JWKS; corporate-directory login. | **yes** — `auth_*` |
 | `nanoadmin` | `nanoadmin` | The platform catalogue and configuration: config items, agent types and overrides, prompts, models/providers, capabilities (built-in tools, skills, MCP), permission keys, alert rules, the audit log. | **yes** — `admin_*` |
-| `nanoworkspace` | `nanoworkspace` | The agent workspace surface: file listing, previews, uploads and the git panel. Stateless — it verifies the caller, asks the portal who owns the agent, and forwards through the container's tunnel. | no |
+| `nanoworkspace` | `nanoworkspace` | The agent workspace surface: file listing, previews, uploads, the git panel and long-running goals. Files and conversations are forwarded through the container's tunnel; the goal rows (`workspace_goals`: lifecycle, rounds, budgets) are the one thing it stores itself, because a goal must survive a restart of both this service and the container. | **yes** — `workspace_goals` (the `sys_*` migration bookkeeping is shared) |
 | `nanoartifacts` | `nanoartifacts` | The work library: spaces, nodes, artifacts, GridFS bodies, the MCP endpoint agents publish through, and its own front end. | **yes** — `artifacts_*` |
 | `nanoui` | `nanoui-backend` | WeChat Mini Program BFF: login forward, account, subscriptions, preferences. | no (talks to nanoauth) |
 

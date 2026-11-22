@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lockup-dark.svg">
-    <img src="docs/assets/lockup.svg" width="360" alt="NanoSec">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lockup-dark.svg?v=2">
+    <img src="docs/assets/lockup.svg?v=2" width="360" alt="NanoSec">
   </picture>
 </p>
 
@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/console-light.png" width="100%" alt="The NanoSec workbench: agents on the left, conversations below, one composer in the middle">
+  <img src="docs/assets/console-light.png?v=2" width="100%" alt="The NanoSec workbench: agents on the left, conversations below, one composer in the middle">
 </p>
 
 <p align="center"><sub>The workbench: agents on the left, conversations below, the composer in the middle. Light theme, 1440 × 900.</sub></p>
@@ -34,7 +34,7 @@
 <summary>Dark theme</summary>
 
 <p align="center">
-  <img src="docs/assets/console-dark.png" width="100%" alt="The same workspace in the dark theme">
+  <img src="docs/assets/console-dark.png?v=2" width="100%" alt="The same workspace in the dark theme">
 </p>
 
 </details>
@@ -88,7 +88,7 @@ plus `14400` bus, `14401` auth, `14402` gateway and `14404` admin, which answer 
 ## How it works
 
 <p align="center">
-  <img src="docs/assets/architecture.svg" width="100%" alt="Channels reach one entry; eight services share one database with one prefix per module">
+  <img src="docs/assets/architecture.svg?v=2" width="100%" alt="Channels reach one entry; eight services share one database with one prefix per module">
 </p>
 
 Three rules hold the split together:
@@ -103,13 +103,13 @@ Three rules hold the split together:
 ## The console
 
 <p align="center">
-  <img src="docs/assets/admin.png" width="100%" alt="The admin console: platform health, users, containers and alerts in one place">
+  <img src="docs/assets/admin.png?v=2" width="100%" alt="The admin console: platform health, users, containers and alerts in one place">
 </p>
 
 <p align="center"><sub>The admin console: health, users, containers, audit and alert rules — the operational half of the same shell.</sub></p>
 
 <p align="center">
-  <img src="docs/assets/artifacts.png" width="100%" alt="The work library: spaces, folders and a rendered document">
+  <img src="docs/assets/artifacts.png?v=2" width="100%" alt="The work library: spaces, folders and a rendered document">
 </p>
 
 <p align="center"><sub>The work library: spaces and folders on the left, the published document rendered in place.</sub></p>

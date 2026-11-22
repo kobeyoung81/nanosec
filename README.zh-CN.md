@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lockup-dark.svg">
-    <img src="docs/assets/lockup.svg" width="360" alt="NanoSec">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/lockup-dark.svg?v=2">
+    <img src="docs/assets/lockup.svg?v=2" width="360" alt="NanoSec">
   </picture>
 </p>
 
@@ -25,7 +25,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/assets/console-light-zh.png" width="100%" alt="NanoSec 工作台：左侧智能体、下方对话列表、中间是会话与输入框">
+  <img src="docs/assets/console-light-zh.png?v=2" width="100%" alt="NanoSec 工作台：左侧智能体、下方对话列表、中间是会话与输入框">
 </p>
 
 <p align="center"><sub>工作台：左侧智能体、下方对话列表、中间是会话与输入框。浅色主题，1440 × 900。</sub></p>
@@ -34,7 +34,7 @@
 <summary>深色主题</summary>
 
 <p align="center">
-  <img src="docs/assets/console-dark-zh.png" width="100%" alt="同一个工作台的深色主题">
+  <img src="docs/assets/console-dark-zh.png?v=2" width="100%" alt="同一个工作台的深色主题">
 </p>
 
 </details>
@@ -83,7 +83,7 @@ docker compose up -d
 ## 工作原理
 
 <p align="center">
-  <img src="docs/assets/architecture.svg" width="100%" alt="渠道进入同一个入口；八个服务共用一个数据库，每个模块一组前缀">
+  <img src="docs/assets/architecture.svg?v=2" width="100%" alt="渠道进入同一个入口；八个服务共用一个数据库，每个模块一组前缀">
 </p>
 
 三条规则维持这个拆分：
@@ -96,13 +96,13 @@ docker compose up -d
 ## 控制台
 
 <p align="center">
-  <img src="docs/assets/admin.png" width="100%" alt="管理端：平台健康、用户、容器与告警在同一个界面">
+  <img src="docs/assets/admin.png?v=2" width="100%" alt="管理端：平台健康、用户、容器与告警在同一个界面">
 </p>
 
 <p align="center"><sub>管理端：健康、用户、容器、审计与告警规则 —— 同一个外壳里的运维那一半。</sub></p>
 
 <p align="center">
-  <img src="docs/assets/artifacts.png" width="100%" alt="作品库：空间、目录与就地渲染的文档">
+  <img src="docs/assets/artifacts.png?v=2" width="100%" alt="作品库：空间、目录与就地渲染的文档">
 </p>
 
 <p align="center"><sub>作品库：左边空间与目录，右边就地渲染发布出来的文档。</sub></p>
